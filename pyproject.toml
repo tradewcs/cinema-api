@@ -1,0 +1,21 @@
+[project]
+name = "gp-cinema-api"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "Stanislav Kishechko", email = "skishechko@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard] (>=0.128.1,<0.129.0)",
+    "alembic (>=1.18.3,<2.0.0)",
+    "uvicorn (>=0.40.0,<0.41.0)",
+    "celery[redis] (>=5.6.2,<6.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -7,4 +7,4 @@ celery_app = Celery(
     backend=f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/1",
 )
 
-celery_app.autodiscover_tasks(["src.services"])
+celery_app.autodiscover_tasks(["src.tasks"])

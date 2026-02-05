@@ -1,13 +1,13 @@
-from pydantic import BaseModel, EmailStr, field_validator, ConfigDict, Field
+from decimal import Decimal
+from pydantic import BaseModel, Field
 
-from database import payment_validators
-from  import PaymentStatusEnum
+from models import PaymentStatusEnum
 
-class CreatePaymentSchema(BaseModel):
+
+class PaymentCreateSchema(BaseModel):
     user_id: int
     order_id: int
-    status: PaymentStatusEnum
-    @field_validator("email")
-    @classmethod
-    def validate_email(cls, value):
-        return accounts_validators.validate_email(value.lower())
+    status: PaymentStatusEnum = Field(default=PaymentStatusEnum.SUCCESSFUL)
+    amount: Decimal = Field(max_digits=10, decimal_places=2)
+    external_payment_id: str | None = None
+    payment_items: list["PaymentCreateItemSchema"] = Field(default_factory=list)

@@ -18,12 +18,12 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = (
-        mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     user: Mapped["User"] = relationship("User", back_populates="payments")
-    order_id: Mapped[int] = (
-        mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), nullable=False),
+    order_id: Mapped[int] = mapped_column(
+        ForeignKey("orders.id", ondelete="CASCADE"), nullable=False
     )
     order: Mapped["Order"] = relationship("Order", back_populates="payments")
     created_at: Mapped[datetime] = mapped_column(

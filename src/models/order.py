@@ -56,5 +56,5 @@ class OrderItem(Base):
         DECIMAL(10, 2), nullable=False
     )
 
-    order: Mapped["Order"] = relationship(back_populates="order_item")
-    movie: Mapped["Movie"] = relationship(back_populates="order_item")
+    order: Mapped["Order"] = relationship(back_populates="order_items")
+    movie: Mapped["Movie"] = relationship(back_populates="order_items")

@@ -39,10 +39,10 @@ class UserGroup(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[UserGroupEnum] = mapped_column(Enum(UserGroupEnum), nullable=False, unique=True)
 
-    users: Mapped[List["UserModel"]] = relationship("UserModel", back_populates="group")
+    users: Mapped[List["User"]] = relationship("User", back_populates="group")
 
     def __repr__(self):
-        return f"<UserGroupModel(id={self.id}, name={self.name})>"
+        return f"<UserGroup(id={self.id}, name={self.name})>"
 
 
 class User(Base):
@@ -60,42 +60,42 @@ class User(Base):
     )
 
     group_id: Mapped[int] = mapped_column(ForeignKey("user_groups.id", ondelete="CASCADE"), nullable=False)
-    group: Mapped["UserGroupModel"] = relationship("UserGroupModel", back_populates="users")
+    group: Mapped["UserGroup"] = relationship("UserGroup", back_populates="users")
 
-    activation_token: Mapped[Optional["ActivationTokenModel"]] = relationship(
-        "ActivationTokenModel",
+    activation_token: Mapped[Optional["ActivationToken"]] = relationship(
+        "ActivationToken",
         back_populates="user",
         cascade="all, delete-orphan"
     )
 
-    password_reset_token: Mapped[Optional["PasswordResetTokenModel"]] = relationship(
-        "PasswordResetTokenModel",
+    password_reset_token: Mapped[Optional["PasswordResetToken"]] = relationship(
+        "PasswordResetToken",
         back_populates="user",
         cascade="all, delete-orphan"
     )
 
-    refresh_tokens: Mapped[List["RefreshTokenModel"]] = relationship(
-        "RefreshTokenModel",
+    refresh_tokens: Mapped[List["RefreshToken"]] = relationship(
+        "RefreshToken",
         back_populates="user",
         cascade="all, delete-orphan"
     )
 
-    profile: Mapped[Optional["UserProfileModel"]] = relationship(
-        "UserProfileModel",
+    profile: Mapped[Optional["UserProfile"]] = relationship(
+        "UserProfile",
         back_populates="user",
         cascade="all, delete-orphan"
     )
 
     def __repr__(self):
-        return f"<UserModel(id={self.id}, email={self.email}, is_active={self.is_active})>"
+        return f"<User(id={self.id}, email={self.email}, is_active={self.is_active})>"
 
     def has_group(self, group_name: UserGroupEnum) -> bool:
         return self.group.name == group_name
 
     @classmethod
-    def create(cls, email: str, raw_password: str, group_id: int | Mapped[int]) -> "UserModel":
+    def create(cls, email: str, raw_password: str, group_id: int | Mapped[int]) -> "User":
         """
-        Factory method to create a new UserModel instance.
+        Factory method to create a new User instance.
 
         This method simplifies the creation of a new user by handling
         password hashing and setting required attributes.
@@ -142,13 +142,13 @@ class UserProfile(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         unique=True)
-    user: Mapped[User] = relationship("UserModel", back_populates="profile")
+    user: Mapped[User] = relationship("User", back_populates="profile")
 
     __table_args__ = (UniqueConstraint("user_id"),)
 
     def __repr__(self):
         return (
-            f"<UserProfileModel(id={self.id}, first_name={self.first_name}, last_name={self.last_name}, "
+            f"<UserProfile(id={self.id}, first_name={self.first_name}, last_name={self.last_name}, "
             f"gender={self.gender}, date_of_birth={self.date_of_birth})>"
         )
 
@@ -172,7 +172,7 @@ class TokenBase(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
 
-class ActivationTokenModel(TokenBase):
+class ActivationToken(TokenBase):
     __tablename__ = "activation_tokens"
 
     user: Mapped[User] = relationship("UserModel", back_populates="activation_token")
@@ -180,24 +180,24 @@ class ActivationTokenModel(TokenBase):
     __table_args__ = (UniqueConstraint("user_id"),)
 
     def __repr__(self):
-        return f"<ActivationTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
+        return f"<ActivationToken(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
 
 
 class PasswordResetToken(TokenBase):
     __tablename__ = "password_reset_tokens"
 
-    user: Mapped[User] = relationship("UserModel", back_populates="password_reset_token")
+    user: Mapped[User] = relationship("User", back_populates="password_reset_token")
 
     __table_args__ = (UniqueConstraint("user_id"),)
 
     def __repr__(self):
-        return f"<PasswordResetTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
+        return f"<PasswordResetToken(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
 
 
 class RefreshToken(TokenBase):
     __tablename__ = "refresh_tokens"
 
-    user: Mapped[User] = relationship("UserModel", back_populates="refresh_tokens")
+    user: Mapped[User] = relationship("User", back_populates="refresh_tokens")
     token: Mapped[str] = mapped_column(
         String(512),
         unique=True,
@@ -206,9 +206,9 @@ class RefreshToken(TokenBase):
     )
 
     @classmethod
-    def create(cls, user_id: int | Mapped[int], days_valid: int, token: str) -> "RefreshTokenModel":
+    def create(cls, user_id: int | Mapped[int], days_valid: int, token: str) -> "RefreshToken":
         """
-        Factory method to create a new RefreshTokenModel instance.
+        Factory method to create a new RefreshToken instance.
 
         This method simplifies the creation of a new refresh token by calculating
         the expiration date based on the provided number of valid days and setting
@@ -218,4 +218,4 @@ class RefreshToken(TokenBase):
         return cls(user_id=user_id, expires_at=expires_at, token=token)
 
     def __repr__(self):
-        return f"<RefreshTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
+        return f"<RefreshToken(id={self.id}, token={self.token}, expires_at={self.expires_at})>"

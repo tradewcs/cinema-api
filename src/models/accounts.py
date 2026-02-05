@@ -1,5 +1,9 @@
-import enum
-from datetime import datetime, date, timedelta, timezone
+from enums.accounts import UserGroupEnum
+from enums.accounts import GenderEnum
+from datetime import datetime
+from datetime import date
+from datetime import timedelta
+from datetime import timezone
 from typing import List, Optional
 
 from sqlalchemy import (
@@ -27,18 +31,9 @@ from security.passwords import hash_password, verify_password
 from security.utils import generate_secure_token
 
 
-class UserGroupEnum(str, enum.Enum):
-    USER = "user"
-    MODERATOR = "moderator"
-    ADMIN = "admin"
 
 
-class GenderEnum(str, enum.Enum):
-    MAN = "man"
-    WOMAN = "woman"
-
-
-class UserGroupModel(Base):
+class UserGroup(Base):
     __tablename__ = "user_groups"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -50,7 +45,7 @@ class UserGroupModel(Base):
         return f"<UserGroupModel(id={self.id}, name={self.name})>"
 
 
-class UserModel(Base):
+class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -132,7 +127,7 @@ class UserModel(Base):
         return validators.validate_email(value.lower())
 
 
-class UserProfileModel(Base):
+class UserProfile(Base):
     __tablename__ = "user_profiles"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -147,7 +142,7 @@ class UserProfileModel(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         unique=True)
-    user: Mapped[UserModel] = relationship("UserModel", back_populates="profile")
+    user: Mapped[User] = relationship("UserModel", back_populates="profile")
 
     __table_args__ = (UniqueConstraint("user_id"),)
 
@@ -158,7 +153,7 @@ class UserProfileModel(Base):
         )
 
 
-class TokenBaseModel(Base):
+class TokenBase(Base):
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -177,10 +172,10 @@ class TokenBaseModel(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
 
-class ActivationTokenModel(TokenBaseModel):
+class ActivationTokenModel(TokenBase):
     __tablename__ = "activation_tokens"
 
-    user: Mapped[UserModel] = relationship("UserModel", back_populates="activation_token")
+    user: Mapped[User] = relationship("UserModel", back_populates="activation_token")
 
     __table_args__ = (UniqueConstraint("user_id"),)
 
@@ -188,10 +183,10 @@ class ActivationTokenModel(TokenBaseModel):
         return f"<ActivationTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
 
 
-class PasswordResetTokenModel(TokenBaseModel):
+class PasswordResetToken(TokenBase):
     __tablename__ = "password_reset_tokens"
 
-    user: Mapped[UserModel] = relationship("UserModel", back_populates="password_reset_token")
+    user: Mapped[User] = relationship("UserModel", back_populates="password_reset_token")
 
     __table_args__ = (UniqueConstraint("user_id"),)
 
@@ -199,10 +194,10 @@ class PasswordResetTokenModel(TokenBaseModel):
         return f"<PasswordResetTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
 
 
-class RefreshTokenModel(TokenBaseModel):
+class RefreshToken(TokenBase):
     __tablename__ = "refresh_tokens"
 
-    user: Mapped[UserModel] = relationship("UserModel", back_populates="refresh_tokens")
+    user: Mapped[User] = relationship("UserModel", back_populates="refresh_tokens")
     token: Mapped[str] = mapped_column(
         String(512),
         unique=True,

@@ -2,7 +2,16 @@ from datetime import datetime
 from decimal import Decimal
 
 from db import Base
-from sqlalchemy import ForeignKey, Integer, DateTime, func, Numeric, Enum, String
+from sqlalchemy import (
+    ForeignKey,
+    Integer,
+    DateTime,
+    func,
+    Numeric,
+    Enum,
+    String,
+    UniqueConstraint,
+)
 from enum import StrEnum, auto
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -40,4 +49,10 @@ class Payment(Base):
     )
     payment_items: Mapped[list["PaymentItem"]] = relationship(
         "PaymentItem", back_populates="payment", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "external_payment_id", "order", name="uq_payment_id_per_order"
+        ),
     )

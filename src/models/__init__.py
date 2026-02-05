@@ -1,4 +1,4 @@
-from .payments import Payment, PaymentStatusEnum
+from .payments import Payment
 from .payment_items import PaymentItem
 
-__all__ = [Payment, PaymentItem, PaymentStatusEnum]
+__all__ = [Payment, PaymentItem]

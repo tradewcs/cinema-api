@@ -12,15 +12,9 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from enum import StrEnum, auto
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-
-class PaymentStatusEnum(StrEnum):
-    SUCCESSFUL = auto()
-    CANCELED = auto()
-    REFUNDED = auto()
+from enums import PaymentStatusEnum
 
 
 class Payment(Base):

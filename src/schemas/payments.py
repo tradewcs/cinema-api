@@ -1,7 +1,7 @@
 from decimal import Decimal
 from pydantic import BaseModel, Field
 
-from models import PaymentStatusEnum
+from enums import PaymentStatusEnum
 
 
 class PaymentCreateSchema(BaseModel):

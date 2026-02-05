@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from db import Base
-from sqlalchemy import ForeignKey, Integer, DateTime, func, Numeric, Enum
+from sqlalchemy import ForeignKey, Integer, DateTime, func, Numeric, Enum, String
 from enum import StrEnum, auto
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -35,7 +35,9 @@ class Payment(Base):
     amount: Mapped[Decimal] = mapped_column(
         Numeric(precision=10, scale=2), nullable=False
     )
-    external_payment_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    external_payment_id: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, index=True
+    )
     payment_items: Mapped[list["PaymentItem"]] = relationship(
         "PaymentItem", back_populates="payment", cascade="all, delete-orphan"
     )

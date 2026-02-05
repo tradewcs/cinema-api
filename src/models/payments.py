@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from db import Base
-from sqlalchemy import ForeignKey, Integer, DateTime, func
+from sqlalchemy import ForeignKey, Integer, DateTime, func, Numeric, Enum
 from enum import StrEnum, auto
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -30,10 +30,10 @@ class Payment(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     status: Mapped[PaymentStatusEnum] = mapped_column(
-        PaymentStatusEnum, default=PaymentStatusEnum.SUCCESSFUL, nullable=False
+        Enum(PaymentStatusEnum), default=PaymentStatusEnum.SUCCESSFUL, nullable=False
     )
     amount: Mapped[Decimal] = mapped_column(
-        Decimal, precision=10, scale=2, nullable=False
+        Numeric(precision=10, scale=2), nullable=False
     )
     external_payment_id: Mapped[int] = mapped_column(Integer, nullable=True)
     payment_items: Mapped[list["PaymentItem"]] = relationship(

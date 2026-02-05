@@ -3,7 +3,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db import Base
-from sqlalchemy import ForeignKey, Integer, Numeric
+from sqlalchemy import ForeignKey, Integer, Numeric, UniqueConstraint
 
 
 class PaymentItem(Base):
@@ -22,4 +22,10 @@ class PaymentItem(Base):
     )
     price_at_payment: Mapped[Decimal] = mapped_column(
         Numeric(precision=10, scale=2), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "payment_id", "order_item_id", name="uq_payment_item_per_order_item"
+        ),
     )

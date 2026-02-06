@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from db import Base
+from src.db import Base
 from sqlalchemy import ForeignKey, Integer, Numeric, UniqueConstraint
 
 

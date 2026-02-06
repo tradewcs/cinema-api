@@ -13,10 +13,10 @@ from alembic import context
 
 from src.core.config import settings
 from src.db import Base
-from src.models.accounts import * # noqa
-from src.models.movie import * # noqa
-from src.models.order import * # noqa
-
+from src.models.accounts import *  # noqa
+from src.models.movie import *  # noqa
+from src.models.order import *  # noqa
+from src.models import Payment, PaymentItem  # noqa
 
 config = context.config
 

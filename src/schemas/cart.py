@@ -3,12 +3,7 @@ from typing import List
 from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
 
-# TODO: Import GenreSchema from movies module when available
-class CartMovieGenreSchema(BaseModel):
-    id: int
-    name: str
-
-    model_config = ConfigDict(from_attributes=True)
+from src.schemas import GenreRead
 
 
 class CartMovieReadSchema(BaseModel):
@@ -16,9 +11,8 @@ class CartMovieReadSchema(BaseModel):
     id: int
     name: str
     price: Decimal
-    # TODO: Implement logic to extract only the release year from the movie's date
     year: int
-    genres: List[CartMovieGenreSchema]
+    genres: List[GenreRead]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -38,7 +32,6 @@ class CartReadSchema(BaseModel):
     id: int
     user_id: int
     items: List[CartItemReadSchema]
-    # TODO: Implement total items and total price calculation in Service/CRUD layer
     total_items: int
     total_price: Decimal
 

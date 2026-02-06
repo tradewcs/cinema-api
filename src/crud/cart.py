@@ -2,8 +2,7 @@ from typing import Optional
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.cart import Cart
-from models.cart_item import CartItem
+from src.models.cart import Cart, CartItem
 
 class CRUDCart:
     async def get_cart_by_user_id(self, db: AsyncSession, user_id: int) -> Optional[Cart]:

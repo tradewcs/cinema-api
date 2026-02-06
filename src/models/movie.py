@@ -12,10 +12,10 @@ from sqlalchemy import (
     Text,
     Numeric,
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from db import Base
+from src.db import Base
 
 
 movie_genres = Table(
@@ -122,13 +122,15 @@ class Movie(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    uuid: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        unique=True,
-        nullable=False,
-        default=uuid.uuid4,
-        index=True,
-    )
+    # uuid: Mapped[uuid.UUID] = mapped_column(
+    #     PG_UUID(as_uuid=True),
+    #     unique=True,
+    #     nullable=False,
+    #     default=uuid.uuid4,
+    #     index=True,
+    # )
+
+    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
 
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     year: Mapped[int] = mapped_column(Integer, nullable=False)

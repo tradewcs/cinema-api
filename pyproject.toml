@@ -10,7 +10,10 @@ dependencies = [
     "fastapi[standard] (>=0.128.1,<0.129.0)",
     "alembic (>=1.18.3,<2.0.0)",
     "uvicorn (>=0.40.0,<0.41.0)",
-    "celery[redis] (>=5.6.2,<6.0.0)"
+    "celery[redis] (>=5.6.2,<6.0.0)",
+    "python-jose (>=3.5.0,<4.0.0)",
+    "passlib (>=1.7.4,<2.0.0)",
+    "asyncpg (>=0.31.0,<0.32.0)"
 ]
 
 [tool.poetry]

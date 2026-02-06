@@ -1,5 +1,5 @@
-from enums.accounts import UserGroupEnum
-from enums.accounts import GenderEnum
+from src.enums.accounts import UserGroupEnum
+from src.enums.accounts import GenderEnum
 from datetime import datetime
 from datetime import date
 from datetime import timedelta
@@ -25,10 +25,10 @@ from sqlalchemy.orm import (
     validates
 )
 
-from db import Base
-from validators import accounts as validators
-from security.passwords import hash_password, verify_password
-from security.utils import generate_secure_token
+from src.db import Base
+from src.validators import accounts as validators
+from src.security.passwords import hash_password, verify_password
+from src.security.utils import generate_secure_token
 
 
 

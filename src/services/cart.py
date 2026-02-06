@@ -1,6 +1,6 @@
 from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.crud.cart import cart_crud
+from src.crud.cart import CRUDCart
 from src.exceptions.cart import (
     CartItemAlreadyExistsError,
     MovieAlreadyPurchasedError,
@@ -12,9 +12,10 @@ from src.exceptions.cart import (
 class CartService:
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.cart_crud = CRUDCart(db)
 
     async def get_user_cart(self, user_id: int):
-        cart = await cart_crud.get_by_user_id(self.db, user_id=user_id)
+        cart = await self.cart_crud.get_cart_by_user_id(user_id=user_id)
         if not cart:
             raise CartNotFoundError()
 
@@ -41,9 +42,9 @@ class CartService:
         # if is_purchased:
         #     raise MovieAlreadyPurchasedError()
 
-        cart = await cart_crud.get_or_create_cart(self.db, user_id=user_id)
+        cart = await self.cart_crud.get_or_create_cart(user_id=user_id)
 
         if any(item.movie_id == movie_id for item in cart.items):
             raise CartItemAlreadyExistsError()
 
-        return await cart_crud.add_item(self.db, cart_id=cart.id, movie_id=movie_id)
+        return await self.cart_crud.add_item_to_cart(cart_id=cart.id, movie_id=movie_id)

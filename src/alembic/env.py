@@ -1,3 +1,7 @@
+import sys
+import os
+
+
 import asyncio
 from logging.config import fileConfig
 
@@ -7,9 +11,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from core.config import settings
-from db import Base
-from models import * # noqa
+from src.core.config import settings
+from src.db import Base
+from src.models.accounts import * # noqa
+from src.models.movie import * # noqa
 
 
 config = context.config

@@ -107,6 +107,6 @@ class MovieRead(BaseModel):
     price: Decimal | None
 
     certification: CertificationRead
-    genres: list[GenreRead] = []
-    directors: list[DirectorRead] = []
-    stars: list[StarRead] = []
+    genres: list[GenreRead] = Field(default_factory=list)
+    directors: list[DirectorRead] = Field(default_factory=list)
+    stars: list[StarRead] = Field(default_factory=list)

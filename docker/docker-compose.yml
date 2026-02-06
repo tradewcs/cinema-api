@@ -2,15 +2,19 @@ services:
   api:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/api/Dockerfile
     container_name: cinema_api
     env_file:
       - ../.env
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_healthy
     volumes:
       - ../src:/app/src
 
@@ -23,30 +27,113 @@ services:
       POSTGRES_DB: cinema
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cinema -d cinema -h 127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   redis:
     image: redis:7
     container_name: cinema_redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+#  migrator:
+#    build:
+#      context: ..
+#      dockerfile: docker/api/Dockerfile
+#    container_name: cinema_migrator
+#    command: ["/bin/sh", "-c", "/commands/run_migration.sh"]
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    env_file:
+#      - ../.env
+#    environment:
+#      - PYTHONPATH=/app
 
   celery:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/api/Dockerfile
+    container_name: cinema_celery_worker
     command: celery -A src.celery_app worker -l info
     env_file:
       - ../.env
     depends_on:
       - redis
       - postgres
+    volumes:
+      - ../src:/app/src
 
   celery-beat:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/api/Dockerfile
+    container_name: cinema_celery_beat
     command: celery -A src.celery_app beat -l info
     env_file:
       - ../.env
     depends_on:
       - redis
+    volumes:
+      - ../src:/app/src
+
+  flower:
+    build:
+      context: ..
+      dockerfile: docker/api/Dockerfile
+    container_name: cinema_flower
+    command: celery -A src.celery_app flower --port=5555
+    env_file:
+      - ../.env
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery
+    volumes:
+      - ../src:/app/src
+
+  minio:
+    image: minio/minio:latest
+    container_name: cinema_minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    env_file:
+      - ../.env
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio_mc:
+    build:
+      context: ..
+      dockerfile: docker/minio/Dockerfile
+    container_name: cinema_minio_mc
+    command: ["/bin/sh", "-c", "/commands/setup_minio.sh"]
+    depends_on:
+      minio:
+        condition: service_healthy
+    env_file:
+      - ../.env
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local

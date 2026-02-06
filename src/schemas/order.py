@@ -1,0 +1,23 @@
+from datetime import datetime
+from decimal import Decimal
+
+from pydantic import BaseModel, Field, ConfigDict
+
+from src.enums import OrderStatus
+
+
+class OrderCreateSchema(BaseModel):
+    user_id: int
+    created_at: datetime
+    status: OrderStatus = OrderStatus.PENDING
+    total_amount: Decimal | None = Field(max_digits=10, decimal_places=2)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OrderItemCreateSchema(BaseModel):
+    order_id: int
+    movie_id: int
+    price_at_order: Decimal = Field(max_digits=10, decimal_places=2)
+
+    model_config = ConfigDict(from_attributes=True)

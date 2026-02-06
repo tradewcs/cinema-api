@@ -1,3 +1,7 @@
+import sys
+import os
+
+
 import asyncio
 from logging.config import fileConfig
 
@@ -9,7 +13,8 @@ from alembic import context
 
 from src.core.config import settings
 from src.db import Base
-from src.models import * # noqa
+from src.models.accounts import * # noqa
+from src.models.movie import * # noqa
 
 
 config = context.config

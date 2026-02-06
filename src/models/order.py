@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import Enum
 from typing import List
 
 from sqlalchemy import (
@@ -7,7 +6,8 @@ from sqlalchemy import (
     DateTime,
     func,
     Integer,
-    DECIMAL
+    DECIMAL,
+    Enum
 )
 from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.testing.schema import mapped_column
@@ -22,7 +22,7 @@ class Order(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("user.id", ondelete="CASCADE"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
 
     )

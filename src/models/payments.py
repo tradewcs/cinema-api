@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from db import Base
+
 from sqlalchemy import (
     ForeignKey,
     Integer,
@@ -14,7 +14,9 @@ from sqlalchemy import (
 )
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from enums import PaymentStatusEnum
+
+from src.db import Base
+from src.enums import PaymentStatusEnum
 
 
 class Payment(Base):
@@ -47,6 +49,6 @@ class Payment(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "external_payment_id", "order", name="uq_payment_id_per_order"
+            "external_payment_id", "order_id", name="uq_payment_id_per_order"
         ),
     )

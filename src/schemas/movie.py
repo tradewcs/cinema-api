@@ -110,3 +110,31 @@ class MovieRead(BaseModel):
     genres: list[GenreRead] = Field(default_factory=list)
     directors: list[DirectorRead] = Field(default_factory=list)
     stars: list[StarRead] = Field(default_factory=list)
+
+
+class GenreUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class StarUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class DirectorUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class CertificationUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class PageMeta(BaseModel):
+    page: int
+    per_page: int
+    total_items: int
+    total_pages: int
+
+
+class MoviesPage(BaseModel):
+    items: list[MovieRead]
+    meta: PageMeta

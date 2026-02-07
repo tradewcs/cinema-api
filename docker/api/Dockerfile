@@ -14,4 +14,7 @@ RUN poetry config virtualenvs.create false \
 COPY src ./src
 COPY alembic.ini ./
 
+COPY commands /commands
+RUN chmod +x /commands/*.sh
+
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

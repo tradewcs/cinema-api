@@ -1,16 +1,12 @@
 from fastapi import FastAPI
 
 from src.core.config import settings
-from src.api.v1.accounts import router as accounts_router
+
 app = FastAPI(
     title=settings.APP_NAME,
     debug=settings.DEBUG,
 )
-app.include_router(accounts_router, prefix="/accounts", tags=["Accounts"])
 
-@app.get("/health")
-async def healthcheck():
-    return {"status": "ok"}
 
 if __name__ == "__main__":
     import uvicorn

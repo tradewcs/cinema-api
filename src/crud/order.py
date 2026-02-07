@@ -1,13 +1,74 @@
+from typing import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.schemas import OrderItemReadSchema, OrderReadSchema
+from src.enums import OrderStatus
 from src.models import OrderItem, Order
 
 
 class CrudOrder:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def get_order_by_id(self, order_id: int) -> Order | None:
+        stmt = select(Order).where(Order.id == order_id)
+
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_all_orders(self, user_id: int) -> Sequence[Order]:
+        stmt = select(Order).where(Order.user_id == user_id)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
+    async def create_order(self, user_id: int) -> Order:
+        db_order = Order(
+            user_id=user_id,
+            status=OrderStatus.PENDING,
+            total_amount=None
+        )
+        self.db.add(db_order)
+        await self.db.commit()
+        await self.db.refresh(db_order)
+
+        return db_order
+
+    async def update_order_status(self, order_id: int, new_status: OrderStatus) -> Order | None:
+        order = await self.get_order_by_id(order_id)
+
+        if not order:
+            return None
+
+        order.status = new_status
+
+        await self.db.commit()
+        await self.db.refresh(order)
+
+        return order
+
+    async def update_order_total_amount(self, order_id: int,
+                                  amount: float) -> Order | None:
+        order = await self.get_order_by_id(order_id)
+
+        if not order:
+            return None
+
+        order.total_amount = amount
+
+        await self.db.commit()
+        await self.db.refresh(order)
+
+        return order
+
+    async def delete_order(self, order_id: int) -> bool:
+        order = await self.get_order_by_id(order_id)
+        if not order:
+            return False
+
+        await self.db.delete(order)
+        await self.db.commit()
+        return True
 
 
 class CrudOrderItem:

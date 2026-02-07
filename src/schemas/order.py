@@ -15,9 +15,26 @@ class OrderCreateSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class OrderReadSchema(BaseModel):
+    id: int
+    user_id: int
+    created_at: datetime
+    status: OrderStatus = OrderStatus.PENDING
+    total_amount: Decimal | None = Field(max_digits=10, decimal_places=2)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class OrderItemCreateSchema(BaseModel):
     order_id: int
     movie_id: int
     price_at_order: Decimal = Field(max_digits=10, decimal_places=2)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OrderItemReadSchema(BaseModel):
+    id: int
+    order_id: int
+    movie_id: int
+    price_at_order: Decimal = Field(max_digits=10, decimal_places=2)

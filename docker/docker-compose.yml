@@ -50,3 +50,9 @@ services:
       - ../.env
     depends_on:
       - redis
+  mailhog:
+    image: mailhog/mailhog
+    container_name: cinema_mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"

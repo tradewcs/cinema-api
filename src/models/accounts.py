@@ -175,7 +175,7 @@ class TokenBase(Base):
 class ActivationToken(TokenBase):
     __tablename__ = "activation_tokens"
 
-    user: Mapped[User] = relationship("UserModel", back_populates="activation_token")
+    user: Mapped[User] = relationship("User", back_populates="activation_token")
 
     __table_args__ = (UniqueConstraint("user_id"),)
 

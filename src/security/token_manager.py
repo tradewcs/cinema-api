@@ -1,9 +1,17 @@
-from datetime import datetime, timedelta, timezone
+from datetime import (
+    datetime,
+    timedelta,
+    timezone
+)
 from typing import Optional
 
-from jose import jwt, JWTError, ExpiredSignatureError
-from security.interfaces import JWTAuthManagerInterface
-from exceptions.security import (
+from jose import (
+    jwt,
+    JWTError,
+    ExpiredSignatureError
+)
+from src.security.interfaces import JWTAuthManagerInterface
+from src.exceptions.security import (
     TokenExpiredError,
     InvalidTokenError,
 )

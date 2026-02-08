@@ -2,13 +2,26 @@ from .payments import Payment
 from .payment_items import PaymentItem
 from .order import Order, OrderItem
 from .cart import Cart, CartItem
+from src.db.base import Base
+from src.models.accounts import User, UserProfile, UserGroup
+from src.models.movie import Movie
+from src.models.order import Order, OrderItem
+from src.models.payments import Payment
+from src.models.payment_items import PaymentItem
+
 
 __all__ = [
-    Payment,
-    PaymentItem,
-    Order,
-    OrderItem,
-    Cart,
-    CartItem,
+    "Base",
+    "User",
+    "UserProfile",
+    "UserGroup",
+    "Movie",
+    "Order",
+    "OrderItem",
+    "Payment",
+    "PaymentItem",
+    "Cart",
+    "CartItem",
+
 ]
 

@@ -85,6 +85,16 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+    payments: Mapped[list["Payment"]] = relationship(
+        "Payment",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    orders: Mapped[list["Order"]] = relationship(
+        "Order",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, is_active={self.is_active})>"
@@ -175,7 +185,7 @@ class TokenBase(Base):
 class ActivationToken(TokenBase):
     __tablename__ = "activation_tokens"
 
-    user: Mapped[User] = relationship("UserModel", back_populates="activation_token")
+    user: Mapped[User] = relationship("User", back_populates="activation_token")
 
     __table_args__ = (UniqueConstraint("user_id"),)
 

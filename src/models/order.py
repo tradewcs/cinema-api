@@ -43,6 +43,17 @@ class Order(Base):
     user: Mapped["User"] = relationship(back_populates="orders")
     items: Mapped[List["OrderItem"]] = relationship(back_populates="order")
 
+    payments: Mapped[list["Payment"]] = relationship(
+        "Payment",
+        back_populates="order",
+        cascade="all, delete-orphan"
+    )
+
+    order_items: Mapped[list["OrderItem"]] = relationship(
+        "OrderItem",
+        back_populates="order",
+        cascade="all, delete-orphan"
+    )
 
 class OrderItem(Base):
     __tablename__ = "order_items"
@@ -62,6 +73,12 @@ class OrderItem(Base):
         DECIMAL(10, 2), nullable=False
     )
 
-    order: Mapped["Order"] = relationship(back_populates="order_items")
+    order: Mapped["Order"] = relationship(back_populates="items")
+
     movie: Mapped["Movie"] = relationship(back_populates="order_items")
-#lol
+
+    payment_items: Mapped[list["PaymentItem"]] = relationship(
+        "PaymentItem",
+        back_populates="order_item",
+        cascade="all, delete-orphan"
+    )

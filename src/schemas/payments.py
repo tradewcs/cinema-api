@@ -24,13 +24,11 @@ class PaymentReadSchema(BaseModel):
 
 
 class PaymentCreateSchema(BaseModel):
-    user_id: int
     order_id: int
     amount: Decimal = Field(max_digits=10, decimal_places=2, gt=0)
 
 
 class RefundCreateSchema(BaseModel):
-    user_id: int
     session_id: str
     amount: Decimal = Field(max_digits=10, decimal_places=2, gt=0)
 

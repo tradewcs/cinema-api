@@ -1,3 +1,4 @@
+from src.models.cart import Cart, CartItem
 from src.db.base import Base
 from src.models.accounts import User, UserProfile, UserGroup
 from src.models.movie import Movie
@@ -16,6 +17,7 @@ __all__ = [
     "OrderItem",
     "Payment",
     "PaymentItem",
-
+    "Cart",
+    "CartItem",
 ]
 

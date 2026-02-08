@@ -4,11 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.crud import movies as crud_movies
+from src.repositories import movies as crud_movies
 from src.db import get_db
 from src.schemas.movie import MovieCreate, MovieRead, MovieUpdate, MoviesPage, PageMeta
 from src.dependencies.permissions import require_moderator
-
 
 router = APIRouter(prefix="/movies", tags=["Movies"])
 
@@ -64,7 +63,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     "/",
     response_model=MovieRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_moderator)]
+    dependencies=[Depends(require_moderator)],
 )
 async def create_movie(payload: MovieCreate, db: AsyncSession = Depends(get_db)):
     try:
@@ -83,8 +82,12 @@ async def create_movie(payload: MovieCreate, db: AsyncSession = Depends(get_db))
         )
 
 
-@router.patch("/{movie_id}", response_model=MovieRead, dependencies=[Depends(require_moderator)])
-async def update_movie(movie_id: int, payload: MovieUpdate, db: AsyncSession = Depends(get_db)):
+@router.patch(
+    "/{movie_id}", response_model=MovieRead, dependencies=[Depends(require_moderator)]
+)
+async def update_movie(
+    movie_id: int, payload: MovieUpdate, db: AsyncSession = Depends(get_db)
+):
     movie = await crud_movies.get_movie(db, movie_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
@@ -105,7 +108,11 @@ async def update_movie(movie_id: int, payload: MovieUpdate, db: AsyncSession = D
         )
 
 
-@router.delete("/{movie_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_moderator)])
+@router.delete(
+    "/{movie_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_moderator)],
+)
 async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await crud_movies.get_movie(db, movie_id)
     if not movie:

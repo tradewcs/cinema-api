@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+# Імпортуємо HTTPBearer та схему для отримання токена
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,18 +10,21 @@ from src.db.session import get_db
 from src.models.accounts import User
 from src.enums.accounts import UserGroupEnum
 
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/accounts/login"
-)
+# Змінюємо схему: тепер це просто "замок" для вводу токена
+reusable_oauth2 = HTTPBearer()
 
 
 async def get_current_user(
         db: AsyncSession = Depends(get_db),
-        token: str = Depends(reusable_oauth2)
+        # reusable_oauth2 тепер повертає об'єкт HTTPAuthorizationCredentials
+        auth: HTTPAuthorizationCredentials = Depends(reusable_oauth2)
 ) -> User:
     """
     Decodes the JWT token and returns the current authenticated user.
     """
+    # Дістаємо сам токен із поля credentials
+    token = auth.credentials
+
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
@@ -55,8 +59,6 @@ async def get_admin_user(
     """
     Verifies if the current user has administrative or moderator privileges.
     """
-    # Assuming User model has a relationship to UserGroup or group_id
-    # This logic checks if the user's group name is ADMIN or MODERATOR
     if current_user.group.name not in [UserGroupEnum.ADMIN.value, UserGroupEnum.MODERATOR.value]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

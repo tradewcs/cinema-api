@@ -18,7 +18,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from src.db import get_db
-from src.core.config import Settings
+from src.core.config import Settings, settings
 from src.dependencies.accounts import (
     get_jwt_auth_manager, get_settings,
     get_accounts_email_notificator
@@ -144,7 +144,7 @@ async def register_user(
         ) from e
     else:
         activation_link = (
-            f"http://127.0.0.1:8000/accounts/activate/"
+            f"{settings.BASE_URL}/accounts/activate"
             f"?email={new_user.email}&token={activation_token.token}"
         )
 
@@ -212,7 +212,8 @@ async def activate_account(
     await db.delete(token_record)
     await db.commit()
 
-    login_link = "http://127.0.0.1:8000/accounts/login/"
+    base_url = settings.BASE_URL
+    login_link = f"{base_url}/accounts/login/"
 
     await email_sender.send_activation_complete_email(
         email,
@@ -269,8 +270,8 @@ async def request_password_reset_token(
     await db.commit()
 
     password_reset_complete_link = (
-        f"http://127.0.0.1:8000/accounts/reset-password/complete/"
-        f"?email={user.email}&token={reset_token.token}"
+        f"{settings.BASE_URL}/accounts/reset-password/complete"
+        f"?token={reset_token.token}"
     )
 
     await email_sender.send_password_reset_email(
@@ -394,7 +395,7 @@ async def reset_password(
             detail="An error occurred while resetting the password."
         )
 
-    login_link = "http://127.0.0.1/accounts/login/"
+    login_link = f"{settings.BASE_URL}/accounts/login/"
     await email_sender.send_password_reset_complete_email(
         str(data.email),
         login_link
@@ -664,7 +665,7 @@ async def resend_activation_email(
     await db.commit()
 
     activation_link = (
-        f"http://127.0.0.1:8000/accounts/activate/"
+        f"{settings.BASE_URL}/accounts/activate"
         f"?email={user.email}&token={activation_token.token}"
     )
 

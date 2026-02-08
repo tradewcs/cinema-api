@@ -1,5 +1,4 @@
-from .payments import Payment
-from .payment_items import PaymentItem
+from .payments import Payment, PaymentItem
 from .order import Order, OrderItem
 
 __all__ = [

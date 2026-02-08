@@ -1,6 +1,6 @@
-from typing import Sequence
+from typing import Sequence, List
 
-from sqlalchemy import select
+from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.enums import OrderStatus
@@ -93,6 +93,12 @@ class CrudOrderItem:
         await self.db.commit()
         await self.db.refresh(db_order_item)
         return db_order_item
+
+    async def bulk_create_order_item(self, items_data: List[dict]) -> None:
+        stmt = insert(OrderItem).values(items_data)
+
+        await self.db.execute(stmt)
+        await self.db.commit()
 
     async def get_order_by_order_item(self, order_id: int) -> Order:
         stmt = select(Order).where(Order.id == order_id)

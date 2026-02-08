@@ -49,14 +49,14 @@ services:
       context: ..
       dockerfile: docker/api/Dockerfile
     container_name: cinema_migrator
-    command: ["/bin/sh", "-c", "/commands/run_migration.sh"]
+    command: [ "/bin/sh", "-c", "poetry run alembic -c alembic.ini upgrade head" ]
     depends_on:
       postgres:
         condition: service_healthy
     env_file:
       - ../.env
     environment:
-      - PYTHONPATH=/app
+      - PYTHONPATH=/app/src
 
   celery:
     build:

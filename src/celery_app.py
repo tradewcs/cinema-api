@@ -1,5 +1,7 @@
 from celery import Celery
 from src.core.config import settings
+from celery.schedules import crontab
+
 
 celery_app = Celery(
     "cinema",
@@ -8,3 +10,7 @@ celery_app = Celery(
 )
 
 celery_app.autodiscover_tasks(["src.tasks"])
+
+
+
+celery_app.conf.beat_schedule = { }

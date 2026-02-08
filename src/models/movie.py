@@ -156,6 +156,10 @@ class Movie(Base):
         secondary=movie_stars,
         back_populates="movies",
     )
+    order_items: Mapped[list["OrderItem"]] = relationship(
+        "OrderItem",
+        back_populates="movie"
+    )
 
     __table_args__ = (
         UniqueConstraint("name", "year", "time", name="uq_movies_name_year_time"),

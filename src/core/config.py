@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "online-cinema"
     DEBUG: bool = False
 
+    BASE_URL: str
+
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str

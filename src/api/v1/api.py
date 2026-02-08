@@ -5,7 +5,7 @@ from src.api.v1.genres import router as genres_router
 from src.api.v1.stars import router as stars_router
 from src.api.v1.directors import router as directors_router
 from src.api.v1.certifications import router as certifications_router
-
+from src.api.v1.accounts import router as accounts_router
 
 api_router = APIRouter()
 
@@ -14,3 +14,4 @@ api_router.include_router(genres_router)
 api_router.include_router(stars_router)
 api_router.include_router(directors_router)
 api_router.include_router(certifications_router)
+api_router.include_router(accounts_router, prefix="/accounts", tags=["Accounts"])

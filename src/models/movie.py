@@ -157,6 +157,10 @@ class Movie(Base):
         secondary=movie_stars,
         back_populates="movies",
     )
+    order_items: Mapped[list["OrderItem"]] = relationship(
+        "OrderItem",
+        back_populates="movie"
+    )
 
     order_items: Mapped[list["OrderItem"]] = relationship(
         "OrderItem",

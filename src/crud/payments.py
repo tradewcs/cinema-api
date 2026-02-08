@@ -1,9 +1,11 @@
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
+from src.enums import PaymentStatusEnum
 from src.models import Payment
 
 
@@ -24,10 +26,28 @@ class PaymentRepository:
 
         return await self.db.scalar(stmt)
 
-    async def get_all(self, skip: int = 0, limit: int | None = None) -> list[Payment]:
-        stmt = select(Payment).offset(skip).order_by(Payment.created_at)
-        if limit is not None:
-            stmt = stmt.limit(limit)
+    async def get_all(
+        self,
+        user_id: int | None,
+        status: PaymentStatusEnum | None,
+        date: datetime | None,
+    ) -> list[Payment]:
+        stmt = (
+            select(Payment)
+            .options(
+                selectinload(Payment.payment_items),
+                selectinload(Payment.user),
+                selectinload(Payment.order),
+            )
+            .order_by(Payment.created_at.desc())
+        )
+        if user_id is not None:
+            stmt = stmt.where(Payment.user_id == user_id)
+        if status is not None:
+            stmt = stmt.where(Payment.status == status)
+        if date is not None:
+            stmt = stmt.where(Payment.created_at >= date)
+
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 

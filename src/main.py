@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.security import HTTPBearer
 
 from src.core.config import settings
 from src.api.v1.api import api_router
@@ -8,6 +9,8 @@ app = FastAPI(
     debug=settings.DEBUG,
 )
 
+bearer_scheme = HTTPBearer()
+app.openapi_schema = None
 app.include_router(api_router)
 
 

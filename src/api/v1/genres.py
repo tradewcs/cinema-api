@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Security
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import movies as crud_movies
 from src.db import get_db
+from src.dependencies.user import get_admin_user
 from src.schemas.movie import GenreCreate, GenreRead, GenreUpdate
-from src.dependencies.permissions import require_moderator
-
+from src.models.accounts import User
 
 router = APIRouter(prefix="/genres", tags=["Genres"])
 
@@ -27,29 +27,56 @@ async def get_genre(genre_id: int, db: AsyncSession = Depends(get_db)):
 @router.post(
     "/",
     response_model=GenreRead,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_moderator)]
+    status_code=status.HTTP_201_CREATED
 )
-async def create_genre(payload: GenreCreate, db: AsyncSession = Depends(get_db)):
+async def create_genre(
+    payload: GenreCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Security(get_admin_user)
+):
+    """
+    Create a new genre. Requires admin or moderator privileges.
+    """
     try:
         return await crud_movies.create_genre(db, payload.name)
     except IntegrityError:
-        raise HTTPException(status_code=409, detail="Genre with this name already exists")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Genre with this name already exists"
+        )
 
 
-@router.patch("/{genre_id}", response_model=GenreRead, dependencies=[Depends(require_moderator)])
-async def update_genre(genre_id: int, payload: GenreUpdate, db: AsyncSession = Depends(get_db)):
+@router.patch("/{genre_id}", response_model=GenreRead)
+async def update_genre(
+    genre_id: int,
+    payload: GenreUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Security(get_admin_user)
+):
+    """
+    Update an existing genre. Requires admin or moderator privileges.
+    """
     genre = await crud_movies.get_genre(db, genre_id)
     if not genre:
         raise HTTPException(status_code=404, detail="Genre not found")
     try:
         return await crud_movies.update_genre(db, genre, payload.name)
     except IntegrityError:
-        raise HTTPException(status_code=409, detail="Genre with this name already exists")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Genre with this name already exists"
+        )
 
 
-@router.delete("/{genre_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_moderator)])
-async def delete_genre(genre_id: int, db: AsyncSession = Depends(get_db)):
+@router.delete("/{genre_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_genre(
+    genre_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Security(get_admin_user)
+):
+    """
+    Delete a genre. Requires admin or moderator privileges.
+    """
     genre = await crud_movies.get_genre(db, genre_id)
     if not genre:
         raise HTTPException(status_code=404, detail="Genre not found")
@@ -57,5 +84,8 @@ async def delete_genre(genre_id: int, db: AsyncSession = Depends(get_db)):
     try:
         await crud_movies.delete_genre(db, genre)
     except IntegrityError:
-        raise HTTPException(status_code=409, detail="Genre can't be deleted due to related records")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Genre can't be deleted due to related records"
+        )
     return None

@@ -1,5 +1,4 @@
 from fastapi import Depends, HTTPException, status
-# Імпортуємо HTTPBearer та схему для отримання токена
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy import select
@@ -10,19 +9,16 @@ from src.db.session import get_db
 from src.models.accounts import User
 from src.enums.accounts import UserGroupEnum
 
-# Змінюємо схему: тепер це просто "замок" для вводу токена
 reusable_oauth2 = HTTPBearer()
 
 
 async def get_current_user(
         db: AsyncSession = Depends(get_db),
-        # reusable_oauth2 тепер повертає об'єкт HTTPAuthorizationCredentials
         auth: HTTPAuthorizationCredentials = Depends(reusable_oauth2)
 ) -> User:
     """
     Decodes the JWT token and returns the current authenticated user.
     """
-    # Дістаємо сам токен із поля credentials
     token = auth.credentials
 
     try:

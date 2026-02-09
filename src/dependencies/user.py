@@ -1,43 +1,36 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.core.config import settings
 from src.db.session import get_db
 from src.models.accounts import User
 from src.enums.accounts import UserGroupEnum
 
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/accounts/login"
-)
+reusable_oauth2 = HTTPBearer()
 
 
 async def get_current_user(
-        db: AsyncSession = Depends(get_db),
-        token: str = Depends(reusable_oauth2)
+    db: AsyncSession = Depends(get_db),
+    auth: HTTPAuthorizationCredentials = Depends(reusable_oauth2)
 ) -> User:
-    """
-    Decodes the JWT token and returns the current authenticated user.
-    """
+    token = auth.credentials
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        user_id: str = payload.get("sub")
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("user_id")  # твоє поле в токені
         if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-            )
+            raise HTTPException(status_code=401, detail="Could not validate credentials")
     except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-        )
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
 
-    result = await db.execute(select(User).where(User.id == int(user_id)))
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.group))
+        .where(User.id == int(user_id))
+    )
     user = result.scalar_one_or_none()
 
     if not user:
@@ -55,8 +48,6 @@ async def get_admin_user(
     """
     Verifies if the current user has administrative or moderator privileges.
     """
-    # Assuming User model has a relationship to UserGroup or group_id
-    # This logic checks if the user's group name is ADMIN or MODERATOR
     if current_user.group.name not in [UserGroupEnum.ADMIN.value, UserGroupEnum.MODERATOR.value]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

@@ -1,7 +1,9 @@
 from typing import Optional
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from src.models import Movie
 from src.models.cart import Cart, CartItem
 
 class CRUDCart:
@@ -10,10 +12,25 @@ class CRUDCart:
 
     async def get_cart_by_user_id(self, user_id: int) -> Optional[Cart]:
         """
-        Fetches the user's cart.
+        Fetches the user's cart with all items and related movies preloaded.
         """
         result = await self.db.execute(
-            select(Cart).where(Cart.user_id == user_id)
+            select(Cart)
+            .options(
+                selectinload(Cart.items)  # підвантажуємо CartItem
+                .selectinload(CartItem.movie)  # підвантажуємо Movie у CartItem
+                .selectinload(Movie.genres),  # підвантажуємо жанри
+                selectinload(Cart.items)
+                .selectinload(CartItem.movie)
+                .selectinload(Movie.directors),  # підвантажуємо режисерів
+                selectinload(Cart.items)
+                .selectinload(CartItem.movie)
+                .selectinload(Movie.stars),  # підвантажуємо акторів
+                selectinload(Cart.items)
+                .selectinload(CartItem.movie)
+                .selectinload(Movie.certification)  # підвантажуємо сертифікацію
+            )
+            .where(Cart.user_id == user_id)
         )
         return result.scalar_one_or_none()
 

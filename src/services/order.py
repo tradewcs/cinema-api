@@ -1,10 +1,18 @@
 from decimal import Decimal
+from typing import List
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from crud.order import CrudOrder, CrudOrderItem
-from exceptions.order import CartEmptyError, CartNotFoundError
-from services.cart import CartService
+from src.crud.order import CrudOrder, CrudOrderItem
+from src.exceptions.order import (
+    CartEmptyError,
+    CartNotFoundError,
+    OrdersNotExistError
+)
+
+from src.services.cart import CartService
 
 
 class OrderService:
@@ -52,3 +60,11 @@ class OrderService:
                                                         amount=total)
 
         return order
+
+    async def get_orders(
+            self, user_id: int
+    ):
+        orders = self.order_crud.get_all_orders(user_id=user_id)
+
+        if not orders:
+            raise OrdersNotExistError()

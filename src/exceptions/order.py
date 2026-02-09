@@ -22,3 +22,10 @@ class CartEmptyError(OrderException):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Cart is empty."
         )
+
+class OrdersNotExistError(OrderException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Current user doesn't have any order"
+        )

@@ -1,7 +1,7 @@
 from src.models.cart import Cart, CartItem
 from src.db.base import Base
 from src.models.accounts import User, UserProfile, UserGroup
-from src.models.movie import Movie
+from src.models.movie import Movie, Genre, Star, Director, Certification
 from src.models.order import Order, OrderItem
 from src.models.payments import Payment
 from src.models.payment_items import PaymentItem
@@ -13,6 +13,10 @@ __all__ = [
     "UserProfile",
     "UserGroup",
     "Movie",
+    "Genre",
+    "Star",
+    "Director",
+    "Certification",
     "Order",
     "OrderItem",
     "Payment",

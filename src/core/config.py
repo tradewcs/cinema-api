@@ -5,7 +5,8 @@ from pathlib import Path
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     BASE_DIR: str = str(Path(__file__).resolve().parent.parent)

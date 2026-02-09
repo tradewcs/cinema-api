@@ -15,6 +15,7 @@ env/
 ENV/
 .venv
 .venv_linux
+poetry.toml
 
 # Django
 *.log
@@ -55,3 +56,5 @@ htmlcov/
 get-pip.py
 src/celerybeat-schedule
 .venv_linux/
+
+

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status, Security
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.crud import movies as crud_movies
+from src.repositories import movies as crud_movies
 from src.db import get_db
 from src.dependencies.user import get_admin_user
 from src.schemas.movie import MovieCreate, MovieRead, MovieUpdate, MoviesPage, PageMeta

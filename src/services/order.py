@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.crud.order import CrudOrder, CrudOrderItem
+from src.repositories.order import CrudOrder, CrudOrderItem
 from src.exceptions.order import (
     CartEmptyError,
     CartNotFoundError,
@@ -58,6 +58,8 @@ class OrderService:
 
         await self.order_crud.update_order_total_amount(order_id=order.id,
                                                         amount=total)
+
+        await self.cart_service.clear_user_cart(user_id=user_id)
 
         return order
 

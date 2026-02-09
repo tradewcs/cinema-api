@@ -11,14 +11,14 @@ from src.services.order import OrderService
 
 router = APIRouter()
 
-@router.post("/")
+@router.post("/add")
 async def create_order(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     return await OrderService(db).create_order_from_cart(user_id=current_user.id)
 
-@router.get("/", response_model=List[OrderReadSchema])
+@router.get("/all", response_model=List[OrderReadSchema])
 async def list_orders(
         current_user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_db)

@@ -3,7 +3,7 @@ from typing import Dict, Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.crud.cart import CRUDCart
+from src.repositories.cart import CRUDCart
 from src.models.movie import Movie
 from src.models.order import Order, OrderItem
 from src.enums.order_status import OrderStatus
@@ -11,7 +11,7 @@ from src.exceptions.cart import (
     CartItemAlreadyExistsError,
     MovieAlreadyPurchasedError,
     MovieNotAvailableError,
-    CartNotFoundError
+    CartNotFoundError,
 )
 
 
@@ -34,7 +34,7 @@ class CartService:
             "user_id": cart.user_id,
             "items": cart.items,
             "total_items": total_items,
-            "total_price": total_price
+            "total_price": total_price,
         }
 
     async def add_item_to_cart(self, user_id: int, movie_id: int) -> Dict[str, Any]:
@@ -52,7 +52,7 @@ class CartService:
             .where(
                 Order.user_id == user_id,
                 Order.status == OrderStatus.PAID,
-                OrderItem.movie_id == movie_id
+                OrderItem.movie_id == movie_id,
             )
         )
         if purchase_check.scalar_one_or_none():

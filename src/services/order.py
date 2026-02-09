@@ -17,16 +17,13 @@ from src.services.cart import CartService
 
 class OrderService:
     def __init__(
-            self,
-            db: AsyncSession,
-            cart_service: CartService,
-            order_item_crud: CrudOrderItem,
-            order_crud: CrudOrder
+        self,
+        db: AsyncSession,
     ):
         self.db = db
-        self.order_crud = order_crud
-        self.order_item_crud = order_item_crud
-        self.cart_service = cart_service
+        self.cart_service = CartService(db)
+        self.order_crud = CrudOrder(db)
+        self.order_item_crud = CrudOrderItem(db)
 
     async def create_order_from_cart(self, user_id: int):
         cart_data = await self.cart_service.get_user_cart(user_id=user_id)
@@ -41,14 +38,14 @@ class OrderService:
 
         order = await self.order_crud.create_order(user_id=user_id)
 
-        order_items_data = []
-
-        for item in cart_items:
-            order_items_data.append({
+        order_items_data = [
+            {
                 "order_id": order.id,
                 "movie_id": item.movie_id,
-                "price_at_order": item.movie.price
-            })
+                "price_at_order": item.movie.price,
+            }
+            for item in cart_items
+        ]
 
         await self.order_item_crud.bulk_create_order_item(order_items_data)
 
@@ -56,17 +53,19 @@ class OrderService:
             Decimal(str(item.movie.price)) for item in cart_items
         )
 
-        await self.order_crud.update_order_total_amount(order_id=order.id,
-                                                        amount=total)
+        await self.order_crud.update_order_total_amount(
+            order_id=order.id,
+            amount=total
+        )
 
         await self.cart_service.clear_user_cart(user_id=user_id)
 
         return order
 
-    async def get_orders(
-            self, user_id: int
-    ):
-        orders = self.order_crud.get_all_orders(user_id=user_id)
+    async def get_orders(self, user_id: int):
+        orders = await self.order_crud.get_all_orders(user_id=user_id)
 
         if not orders:
             raise OrdersNotExistError()
+
+        return orders

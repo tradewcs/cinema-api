@@ -1,20 +1,44 @@
-FROM python:3.13-slim
+FROM python:3.13
 
+# Setting environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=off
 
+# Installing dependencies
+RUN apt update && apt install -y \
+    gcc \
+    libpq-dev \
+    netcat-openbsd \
+    postgresql-client \
+    dos2unix \
+    && apt clean
+
+# Install Poetry
+RUN python -m pip install --upgrade pip && \
+    pip install poetry
+
+# Configure Poetry to avoid creating a virtual environment
+RUN poetry config virtualenvs.create false
+
+# Set working directory
 WORKDIR /app
 
-RUN pip install --upgrade pip && pip install poetry
+# Copy dependency files
+COPY ./poetry.lock ./pyproject.toml ./alembic.ini ./
 
-COPY pyproject.toml poetry.lock ./
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
+# Install dependencies with Poetry
+RUN poetry lock
+RUN poetry install --no-root --only main
 
-COPY src ./src
-COPY alembic.ini ./
+# Copy the source code
+COPY ./src ./src
 
-COPY commands /commands
+# Copy commands
+COPY ./commands /commands
+
+# Ensure Unix-style line endings for scripts
+RUN dos2unix /commands/*.sh
+
+# Add execute bit to commands files
 RUN chmod +x /commands/*.sh
-
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

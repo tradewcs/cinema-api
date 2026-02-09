@@ -47,7 +47,6 @@ htmlcov/
 .tox/
 
 # CI/CD
-.github/
 .gitlab-ci.yml
 
 # Others

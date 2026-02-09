@@ -44,19 +44,19 @@ services:
     volumes:
       - redis_data:/data
 
-#  migrator:
-#    build:
-#      context: ..
-#      dockerfile: docker/api/Dockerfile
-#    container_name: cinema_migrator
-#    command: ["/bin/sh", "-c", "/commands/run_migration.sh"]
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#    env_file:
-#      - ../.env
-#    environment:
-#      - PYTHONPATH=/app
+  migrator:
+    build:
+      context: ..
+      dockerfile: docker/api/Dockerfile
+    container_name: cinema_migrator
+    command: ["/bin/sh", "-c", "/commands/run_migration.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      - PYTHONPATH=/app
 
   celery:
     build:
@@ -129,6 +129,13 @@ services:
         condition: service_healthy
     env_file:
       - ../.env
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: cinema_mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   postgres_data:

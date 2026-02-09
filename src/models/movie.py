@@ -16,6 +16,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db import Base
+from src.models.order import OrderItem
 
 
 movie_genres = Table(
@@ -155,6 +156,15 @@ class Movie(Base):
     stars: Mapped[list["Star"]] = relationship(
         secondary=movie_stars,
         back_populates="movies",
+    )
+    order_items: Mapped[list["OrderItem"]] = relationship(
+        "OrderItem",
+        back_populates="movie"
+    )
+
+    order_items: Mapped[list["OrderItem"]] = relationship(
+        "OrderItem",
+        back_populates="movie",
     )
 
     __table_args__ = (

@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-
+from src.models.accounts import User
 
 from sqlalchemy import (
     ForeignKey,

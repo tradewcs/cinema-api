@@ -1,6 +1,10 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    field_validator
+)
 
-from validators import accounts
+from src.validators import accounts
 
 
 class BaseEmailPasswordSchema(BaseModel):
@@ -69,3 +73,7 @@ class TokenRefreshRequestSchema(BaseModel):
 class TokenRefreshResponseSchema(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class ActivationResendRequestSchema(BaseModel):
+    email: EmailStr

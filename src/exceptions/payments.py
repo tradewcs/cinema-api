@@ -24,6 +24,10 @@ class PaymentNotAllowed(PaymentSessionError):
     pass
 
 
+class OrderNotFoundError(PaymentError):
+    pass
+
+
 # webhook error
 
 

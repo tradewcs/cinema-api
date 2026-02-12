@@ -2,8 +2,9 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
-from src.crud.payment_items import PaymentItemRepository
-from src.crud.payments import PaymentRepository
+from src.repositories.payment_items import PaymentItemRepository
+from src.repositories.payments import PaymentRepository
+from src.repositories.order import CrudOrder as OrderRepository
 from src.db import get_db
 from src.services.stripe_payments import StripePaymentProcessor
 
@@ -13,9 +14,7 @@ def get_stripe_payment_service(
 ) -> StripePaymentProcessor:
     payment_repository = PaymentRepository(db)
     payment_item_repository = PaymentItemRepository(db)
-    order_repository = OrderRepository(  # noqa todo
-        db
-    )  # noqa TODO make adapter to the third-party code
+    order_repository = OrderRepository(db)
     """Get service for payment logic."""
     return StripePaymentProcessor(
         db=db,

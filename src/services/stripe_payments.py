@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from src.repositories.payments import PaymentRepository
+from src.repositories.order import CrudOrder as OrderRepository
 from src.repositories.payment_items import PaymentItemRepository
 from src.enums import PaymentStatusEnum
 from src.models import Order, Payment
@@ -29,7 +30,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
         db: AsyncSession,
         payment_repo: PaymentRepository,
         payment_item_repo: PaymentItemRepository,
-        order_repo: OrderRepository,  # noqa TODO
+        order_repo: OrderRepository,
     ):
         self.db = db
         self.payment_repo = payment_repo
@@ -40,27 +41,29 @@ class StripePaymentProcessor(PaymentProcessorInterface):
     async def _validate_order_amount(
         self, order: Order, payment_amount: Decimal
     ) -> Decimal:
-        order_items = order.items
-
-        if not order_items:
+        if order.total_amount != payment_amount:
             raise PaymentNotAllowed(f"Order {order.id} has no items")
+        # order_items = order.items
+        #
+        # if not order_items:
+        #     raise PaymentNotAllowed(f"Order {order.id} has no items")
+        #
+        # calculated_total = Decimal("0")
+        # for item in order_items:
+        #     calculated_total += Decimal(str(item.price_at_order))
+        #
+        # if payment_amount != calculated_total:
+        #     raise PaymentAmountMismatch(
+        #         f"Payment amount {payment_amount} doesn't match to order amount {calculated_total} "
+        #     )
 
-        calculated_total = Decimal("0")
-        for item in order_items:
-            calculated_total += Decimal(str(item.price_at_order))
-
-        if payment_amount != calculated_total:
-            raise PaymentAmountMismatch(
-                f"Payment amount {payment_amount} doesn't match to order amount {calculated_total} "
-            )
-
-        return calculated_total
+        return payment_amount
 
     async def _validate_order_for_user(self, order_id: int, user_id: int) -> Order:
-        order = await self.order_repo.get_by_id(order_id)
+        order = await self.order_repo.get_order_by_id(order_id)
 
         if order is None:
-            raise OrderNotFoundError(f"Order {order_id} not found")  # noqa TODO
+            raise OrderNotFoundError(f"Order {order_id} not found")
 
         if order.user_id != user_id:
             raise PaymentNotAllowed(
@@ -130,7 +133,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
 
             await self.db.commit()
 
-        except (SQLAlchemyError, IntegrityError):  # noqa todo
+        except (SQLAlchemyError, IntegrityError):
             await self.db.rollback()
             raise PaymentSessionError("Error while creating payment session")
 
@@ -160,7 +163,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
         )
         new_payment_status = PaymentStatusEnum.SUCCESSFUL
         try:
-            await self.order_repo.update(validated_order, status=OrderStatus.PAID)
+            await self.order_repo.update_order_status(order_id, new_status=OrderStatus.PAID)
             await self.payment_repo.update(payment, status=new_payment_status)
             await self.db.commit()
         except (SQLAlchemyError, IntegrityError):
@@ -227,7 +230,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
         ):
             await self._handle_failed_payment(payment=payment)
 
-        elif event.type == "charge.refund.updated":  # todo
+        elif event.type == "refund.updated" or event.type == "refund.created":
             refund = cast(stripe.Refund, event.data.object)
             await self._handle_refund_updated(refund)
 

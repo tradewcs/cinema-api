@@ -1,15 +1,12 @@
-from pydantic_settings import (
-    BaseSettings,
-    SettingsConfigDict
-)
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
-
 
 
 class AccountsSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     BASE_DIR: Path = Path(__file__).resolve().parent.parent
@@ -43,5 +40,6 @@ class AccountsSettings(BaseSettings):
     @property
     def S3_STORAGE_ENDPOINT(self) -> str:
         return f"http://{self.S3_STORAGE_HOST}:{self.S3_STORAGE_PORT}"
+
 
 accounts_settings = AccountsSettings()

@@ -8,9 +8,11 @@ from src.api.v1.certifications import router as certifications_router
 from src.api.v1.accounts import router as accounts_router
 from src.api.v1.cart import router as cart_router
 from src.api.v1.orders import router as order_router
+from src.api.v1.payments import router as payment_router
 
 api_router = APIRouter(prefix="/api/v1")
 
+api_router.include_router(payment_router, prefix="/payments", tags=["Payments"])
 api_router.include_router(movies_router)
 api_router.include_router(genres_router)
 api_router.include_router(stars_router)

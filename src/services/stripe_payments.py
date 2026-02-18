@@ -129,7 +129,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
                 cancel_url=cancel_url,
             )
 
-            payment.external_id = session.id
+            payment.external_payment_id = session.id
 
             await self.db.commit()
 
@@ -163,7 +163,9 @@ class StripePaymentProcessor(PaymentProcessorInterface):
         )
         new_payment_status = PaymentStatusEnum.SUCCESSFUL
         try:
-            await self.order_repo.update_order_status(order_id, new_status=OrderStatus.PAID)
+            await self.order_repo.update_order_status(
+                order_id, new_status=OrderStatus.PAID
+            )
             await self.payment_repo.update(payment, status=new_payment_status)
             await self.db.commit()
         except (SQLAlchemyError, IntegrityError):

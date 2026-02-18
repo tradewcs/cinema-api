@@ -74,18 +74,12 @@ async def handle_webhook(
     payload = await request.body()
     try:
         await stripe_service.handle_webhook(payload, dict(request.headers))
-    except SignatureDoesNotExist:
+    except (SignatureDoesNotExist, InvalidPayload, InvalidSignature):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing stripe-signature header",
         )
-    except (
-        PaymentDoesNotExist,
-        SessionDoesNotExistError,
-        PaymentDoesNotExist,
-        InvalidPayload,
-        InvalidSignature,
-    ):
+    except (PaymentDoesNotExist, SessionDoesNotExistError):
         raise HTTPException(
             status_code=status.HTTP_200_OK,
             detail="Success",

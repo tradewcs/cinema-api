@@ -213,9 +213,12 @@ class StripePaymentProcessor(PaymentProcessorInterface):
     async def handle_webhook(self, payload: bytes, sig_header: str) -> None:
         event = self._get_verified_event(payload=payload, sig_header=sig_header)
 
-        # attention: not intented for refunds, see refund handler below
+        if event.type in ("refund.updated", "refund.created"):
+            refund = cast(stripe.Refund, event.data.object)
+            await self._handle_refund_updated(refund)
+            return
+
         session = cast(stripe.checkout.Session, event.data.object)
-        # session = cast(stripe.Refund, event.data.object)
 
         stripe_session_id = session.id
 
@@ -231,10 +234,6 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             "checkout.session.async_payment_failed",
         ):
             await self._handle_failed_payment(payment=payment)
-
-        elif event.type == "refund.updated" or event.type == "refund.created":
-            refund = cast(stripe.Refund, event.data.object)
-            await self._handle_refund_updated(refund)
 
     async def refund_payment(
         self,

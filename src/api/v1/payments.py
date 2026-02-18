@@ -15,6 +15,7 @@ from src.exceptions import (
     InvalidSignature,
     OrderNotFoundError,
     PaymentError,
+    SignatureDoesNotExist,
 )
 from src.models import User
 
@@ -71,15 +72,13 @@ async def handle_webhook(
     stripe_service: PaymentServiceDep,
 ) -> dict[str, str]:
     payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
-
-    if not sig_header:
+    try:
+        await stripe_service.handle_webhook(payload, dict(request.headers))
+    except SignatureDoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing stripe-signature header",
         )
-    try:
-        await stripe_service.handle_webhook(payload, sig_header)
     except (
         PaymentDoesNotExist,
         SessionDoesNotExistError,

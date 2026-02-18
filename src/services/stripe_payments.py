@@ -210,7 +210,12 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             await self.payment_repo.update(payment, status=PaymentStatusEnum.REFUNDED)
             await self.db.commit()
 
-    async def handle_webhook(self, payload: bytes, sig_header: str) -> None:
+    async def handle_webhook(self, payload: bytes, headers: dict) -> None:
+        sig_header = headers.get("stripe-signature")
+
+        if not sig_header:
+            raise SignatureDoesNotExist("Missing stripe-signature header")
+
         event = self._get_verified_event(payload=payload, sig_header=sig_header)
 
         if event.type in ("refund.updated", "refund.created"):
@@ -224,7 +229,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
 
         payment = await self.payment_repo.get_by_external_payment_id(stripe_session_id)
         if not payment:
-            raise PaymentDoesNotExist("Paymen does not exist")
+            raise PaymentDoesNotExist("Payment does not exist")
 
         if event.type == "checkout.session.completed":
             await self._handle_successful_payment(payment=payment, session=session)

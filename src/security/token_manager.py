@@ -21,16 +21,23 @@ class JWTAuthManager(JWTAuthManagerInterface):
     A manager for creating, decoding, and verifying JWT access and refresh tokens.
     """
 
-    _ACCESS_KEY_TIMEDELTA_MINUTES = 60
-    _REFRESH_KEY_TIMEDELTA_MINUTES = 60 * 24 * 7
 
-    def __init__(self, secret_key_access: str, secret_key_refresh: str, algorithm: str):
+    def __init__(
+            self,
+            secret_key_access: str,
+            secret_key_refresh: str,
+            algorithm: str,
+            access_ttl: int,
+            refresh_ttl: int,
+    ):
         """
         Initialize the manager with secret keys and algorithm for token operations.
         """
         self._secret_key_access = secret_key_access
         self._secret_key_refresh = secret_key_refresh
         self._algorithm = algorithm
+        self._access_ttl = access_ttl
+        self._refresh_ttl = refresh_ttl
 
     def _create_token(self, data: dict, secret_key: str, expires_delta: timedelta) -> str:
         """
@@ -48,7 +55,7 @@ class JWTAuthManager(JWTAuthManagerInterface):
         return self._create_token(
             data,
             self._secret_key_access,
-            expires_delta or timedelta(minutes=self._ACCESS_KEY_TIMEDELTA_MINUTES))
+            expires_delta or timedelta(seconds=self._access_ttl))
 
     def create_refresh_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """
@@ -57,7 +64,7 @@ class JWTAuthManager(JWTAuthManagerInterface):
         return self._create_token(
             data,
             self._secret_key_refresh,
-            expires_delta or timedelta(minutes=self._REFRESH_KEY_TIMEDELTA_MINUTES))
+            expires_delta or timedelta(seconds=self._refresh_ttl))
 
     def decode_access_token(self, token: str) -> dict:
         """

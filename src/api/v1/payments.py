@@ -54,10 +54,15 @@ async def create_session(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Order with id {payment_data.order_id} not found",
         )
-    except (PaymentNotAllowed, PaymentAmountMismatch):
+    except PaymentNotAllowed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Order with id {payment_data.order_id} is invalid",
+        )
+    except PaymentAmountMismatch:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Payment amount mismatches with order amount",
         )
     except PaymentSessionError:
         raise HTTPException(

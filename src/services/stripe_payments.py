@@ -42,21 +42,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
         self, order: Order, payment_amount: Decimal
     ) -> Decimal:
         if order.total_amount != payment_amount:
-            raise PaymentNotAllowed(f"Order {order.id} has no items")
-        # order_items = order.items
-        #
-        # if not order_items:
-        #     raise PaymentNotAllowed(f"Order {order.id} has no items")
-        #
-        # calculated_total = Decimal("0")
-        # for item in order_items:
-        #     calculated_total += Decimal(str(item.price_at_order))
-        #
-        # if payment_amount != calculated_total:
-        #     raise PaymentAmountMismatch(
-        #         f"Payment amount {payment_amount} doesn't match to order amount {calculated_total} "
-        #     )
-
+            raise PaymentAmountMismatch(f"Order {order.id} has no items")
         return payment_amount
 
     async def _validate_order_for_user(self, order_id: int, user_id: int) -> Order:

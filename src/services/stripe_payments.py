@@ -82,14 +82,8 @@ class StripePaymentProcessor(PaymentProcessorInterface):
                 payment_id=payment.id, order_items=order.items
             )
 
-            base_url = settings.FRONTEND_BASE_URL
-
-            success_url = (
-                f"{base_url}/payments/success?session_id={{CHECKOUT_SESSION_ID}}"
-            )
-            cancel_url = (
-                f"{base_url}/payments/cancel?session_id={{CHECKOUT_SESSION_ID}}"
-            )
+            success_url = f"{settings.BASE_URL}/payments/success?session_id={{CHECKOUT_SESSION_ID}}"
+            cancel_url = f"{settings.BASE_URL}/payments/cancel?session_id={{CHECKOUT_SESSION_ID}}"
             session = await stripe.checkout.Session.create_async(
                 mode="payment",
                 payment_method_types=["card"],

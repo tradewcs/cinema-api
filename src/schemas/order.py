@@ -4,6 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
 
 from src.enums import OrderStatus
+from src.schemas.payments import PaymentSessionReadSchema
 
 
 class OrderCreateSchema(BaseModel):
@@ -15,12 +16,22 @@ class OrderCreateSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class OrderReadSchema(BaseModel):
+class OrderReadSchema(PaymentSessionReadSchema):
     id: int
     user_id: int
     created_at: datetime
     status: OrderStatus = OrderStatus.PENDING
     total_amount: Decimal | None = Field(max_digits=10, decimal_places=2)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OrderListSchema(BaseModel):
+    id: int
+    user_id: int
+    created_at: datetime
+    status: OrderStatus
+    total_amount: Decimal | None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -8,8 +8,8 @@ from src.dependencies.accounts_settings import (
     AccountsSettings
 )
 from src.db import get_db
-from repositories.accounts import AccountsRepository
-from services.accounts import AccountsService
+from src.repositories.accounts import AccountsRepository
+from src.services.accounts import AccountsService
 from src.notifications.interfaces import EmailSenderInterface
 from src.notifications.emails import EmailSender
 from src.security.interfaces import JWTAuthManagerInterface

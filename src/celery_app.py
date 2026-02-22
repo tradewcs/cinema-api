@@ -11,6 +11,11 @@ celery_app = Celery(
 
 celery_app.autodiscover_tasks(["src.tasks"])
 
+celery_app.conf.timezone = "UTC"
 
-
-celery_app.conf.beat_schedule = { }
+celery_app.conf.beat_schedule = {
+    "delete-expired-tokens-every-hour": {
+        "task": "delete_expired_tokens",
+        "schedule": crontab(minute=0, hour="*"),
+    },
+}

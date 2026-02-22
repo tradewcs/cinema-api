@@ -1,5 +1,12 @@
-import pytest
-from httpx import AsyncClient
+import pytest_asyncio
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.db.session import SessionLocal
+
+
+from httpx import AsyncClient, ASGITransport
+from asgi_lifespan import LifespanManager
+
 from src.main import app
 from src.notifications.interfaces import EmailSenderInterface
 from src.dependencies.accounts import get_accounts_email_notificator
@@ -27,10 +34,20 @@ def override_email_sender():
 app.dependency_overrides[get_accounts_email_notificator] = override_email_sender
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client():
-    async with AsyncClient(
-        app=app,
-        base_url="http://test"
-    ) as ac:
-        yield ac
+
+    async with LifespanManager(app):
+
+        transport = ASGITransport(app=app)
+
+        async with AsyncClient(
+            transport=transport,
+            base_url="http://test"
+        ) as ac:
+            yield ac
+
+@pytest_asyncio.fixture
+async def db_session() -> AsyncSession:
+    async with SessionLocal() as session:
+        yield session

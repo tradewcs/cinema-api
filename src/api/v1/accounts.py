@@ -5,7 +5,7 @@ from fastapi import (
 )
 
 from src.dependencies.accounts import get_accounts_service
-from services.accounts import AccountsService
+from src.services.accounts import AccountsService
 from src.core.config import Settings
 from src.dependencies.accounts import (
     get_jwt_auth_manager, get_settings,

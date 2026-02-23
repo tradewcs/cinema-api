@@ -137,15 +137,15 @@ async def handle_refund(
 
 @router.get("/success", status_code=status.HTTP_200_OK)
 async def payment_success(
-    ext_session_id: str,
+    session_id: str,
     stripe_service: PaymentServiceDep,
 ) -> PaymentStatusReadSchema:
     try:
-        return await stripe_service.get_payment_status(ext_session_id)
+        return await stripe_service.get_payment_status(session_id)
     except SessionDoesNotExistError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"No session found by the id {ext_session_id}",
+            detail=f"No session found by the id {session_id}",
         )
 
 

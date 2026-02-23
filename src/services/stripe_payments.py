@@ -132,7 +132,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
     async def _handle_successful_payment(
         self, payment: Payment, session: stripe.checkout.Session
     ) -> None:
-        if payment.status == PaymentStatusEnum.SUCCESSFUL:
+        if payment.order.status == OrderStatus.PAID:
             return
 
         order_id = int(session.metadata.get("order_id"))

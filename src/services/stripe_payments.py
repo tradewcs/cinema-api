@@ -138,9 +138,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
         order_id = int(session.metadata.get("order_id"))
         user_id = int(session.metadata.get("user_id"))
 
-        validated_order = await self._validate_order_for_user(
-            order_id=order_id, user_id=user_id
-        )
+        await self._validate_order_for_user(order_id=order_id, user_id=user_id)
         new_payment_status = PaymentStatusEnum.SUCCESSFUL
         try:
             await self.order_repo.update_order_status(
@@ -169,9 +167,8 @@ class StripePaymentProcessor(PaymentProcessorInterface):
 
     async def _handle_refund_updated(self, refund: stripe.Refund) -> None:
         payment_intent = refund.payment_intent
-
         sessions = await stripe.checkout.Session.list_async(
-            payment_intent=payment_intent.id, limit=1
+            payment_intent=payment_intent, limit=1
         )
 
         if not sessions.data:
@@ -180,15 +177,28 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             )
 
         session = sessions.data[0]
+        order_id = int(session.metadata.get("order_id"))
 
         payment = await self.payment_repo.get_by_external_payment_id(session.id)
 
         if not payment:
             raise PaymentDoesNotExist("Payment does not exist")
 
-        if refund.status == "succeeded":
-            await self.payment_repo.update(payment, status=PaymentStatusEnum.REFUNDED)
-            await self.db.commit()
+        if (
+            refund.status == "succeeded"
+            and payment.status != PaymentStatusEnum.REFUNDED
+        ):
+            try:
+                await self.payment_repo.update(
+                    payment, status=PaymentStatusEnum.REFUNDED
+                )
+                await self.order_repo.update_order_status(
+                    order_id=order_id, new_status=OrderStatus.CANCELED
+                )
+                await self.db.commit()
+            except (IntegrityError, SQLAlchemyError):
+                await self.db.rollback()
+                raise WebHookPaymentError("Error while processing webhook")
 
     async def handle_webhook(self, payload: bytes, headers: dict) -> None:
         sig_header = headers.get("stripe-signature")
@@ -198,7 +208,12 @@ class StripePaymentProcessor(PaymentProcessorInterface):
 
         event = self._get_verified_event(payload=payload, sig_header=sig_header)
 
-        if event.type in ("refund.updated", "refund.created"):
+        if event.type in (
+            "refund.updated",
+            "refund.created",
+            "charge.refunded",
+            "charge.refund.updated",
+        ):
             refund = cast(stripe.Refund, event.data.object)
             await self._handle_refund_updated(refund)
             return
@@ -241,7 +256,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             raise SessionDoesNotExistError("No payment intent found for this session")
 
         # validate the user to refund
-        if session.metadata.get("user_id") != auth_user_id:
+        if int(session.metadata.get("user_id")) != auth_user_id:
             raise PaymentNotAllowed("Refund not allowed")
 
         amount_in_cents = int(refund_request.amount * 100)

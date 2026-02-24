@@ -8,7 +8,7 @@ from src.db.session import SessionLocal
 from src.models.accounts import ActivationToken, PasswordResetToken
 
 
-@shared_task
+@shared_task(name="delete_expired_tokens")
 def delete_expired_tokens():
     asyncio.run(_delete())
 

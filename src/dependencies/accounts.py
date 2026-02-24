@@ -1,11 +1,15 @@
 import os
 
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.dependencies.accounts_settings import (
     accounts_settings,
     AccountsSettings
 )
-
+from src.db import get_db
+from src.repositories.accounts import AccountsRepository
+from src.services.accounts import AccountsService
 from src.notifications.interfaces import EmailSenderInterface
 from src.notifications.emails import EmailSender
 from src.security.interfaces import JWTAuthManagerInterface
@@ -47,7 +51,9 @@ def get_jwt_auth_manager(settings: AccountsSettings = Depends(get_settings)) -> 
     return JWTAuthManager(
         secret_key_access=settings.SECRET_KEY,
         secret_key_refresh=settings.SECRET_KEY,
-        algorithm=settings.JWT_SIGNING_ALGORITHM
+        algorithm=settings.JWT_SIGNING_ALGORITHM,
+        access_ttl=settings.JWT_ACCESS_TTL,
+        refresh_ttl=settings.JWT_REFRESH_TTL,
     )
 
 
@@ -105,3 +111,10 @@ def get_s3_storage_client(
         secret_key=settings.S3_STORAGE_SECRET_KEY,
         bucket_name=settings.S3_BUCKET_NAME
     )
+
+def get_accounts_service(
+        db: AsyncSession = Depends(get_db),
+        email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
+) -> AccountsService:
+    repo = AccountsRepository(db)
+    return AccountsService(repo, email_sender)

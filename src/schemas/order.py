@@ -47,6 +47,8 @@ class OrderItemCreateSchema(BaseModel):
 
 
 class OrderItemReadSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     order_id: int
     movie_id: int

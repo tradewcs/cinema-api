@@ -2,7 +2,8 @@ from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
 
-from src.enums import PaymentStatusEnum
+from src.enums import PaymentStatusEnum, OrderStatus
+from src.schemas import OrderItemReadSchema
 
 
 class PaymentReadItemSchema(BaseModel):
@@ -44,4 +45,10 @@ class PaymentSessionReadSchema(BaseModel):
 
 
 class PaymentStatusReadSchema(BaseModel):
-    status: PaymentStatusEnum
+    model_config = ConfigDict(from_attributes=True)
+
+    order_id: int
+    order_status: OrderStatus
+    order_items: list[OrderItemReadSchema]
+    paid_at: datetime
+    amount: Decimal = Field(max_digits=10, decimal_places=2, gt=0)

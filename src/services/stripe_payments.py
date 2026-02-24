@@ -294,4 +294,15 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             raise SessionDoesNotExistError(
                 f"Session does not exist with {ext_session_id}"
             )
-        return PaymentStatusReadSchema(status=payment.status)
+        order = await self.order_repo.get_order_by_id(order_id=payment.order_id)
+        if not order:
+            raise SessionDoesNotExistError(
+                f"Session does not exist with {ext_session_id}"
+            )
+        return PaymentStatusReadSchema(
+            order_id=order.id,
+            order_status=order.status,
+            order_items=order.items,
+            paid_at=payment.created_at,
+            amount=payment.amount,
+        )

@@ -69,13 +69,9 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             order_id=payment_request.order_id, user_id=auth_user_id
         )
 
-        validated_amount = await self._validate_order_amount(
-            order, payment_request.amount
-        )
-
         try:
             payment = await self.payment_repo.create(
-                order_id=order.id, user_id=auth_user_id, amount=validated_amount
+                order_id=order.id, user_id=auth_user_id, amount=order.total_amount
             )
 
             await self.payment_repo_item.create_from_order_items(
@@ -94,7 +90,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
                             "product_data": {
                                 "name": "Purchase videos",
                             },
-                            "unit_amount": int(payment_request.amount * 100),
+                            "unit_amount": int(order.total_amount * 100),
                         },
                         "quantity": 1,
                     }
@@ -102,7 +98,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
                 metadata={
                     "order_id": order.id,
                     "user_id": auth_user_id,
-                    "amount_paid": validated_amount,
+                    "amount_paid": order.total_amount,
                     "payment_id": payment.id,
                 },
                 success_url=success_url,
@@ -139,12 +135,11 @@ class StripePaymentProcessor(PaymentProcessorInterface):
         user_id = int(session.metadata.get("user_id"))
 
         await self._validate_order_for_user(order_id=order_id, user_id=user_id)
-        new_payment_status = PaymentStatusEnum.SUCCESSFUL
         try:
             await self.order_repo.update_order_status(
                 order_id, new_status=OrderStatus.PAID
             )
-            await self.payment_repo.update(payment, status=new_payment_status)
+            await self.payment_repo.update(payment, status=PaymentStatusEnum.SUCCESSFUL)
             await self.db.commit()
         except (SQLAlchemyError, IntegrityError):
             await self.db.rollback()

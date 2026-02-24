@@ -52,7 +52,7 @@ class OrderService:
 
         payment_read_schema = await payment_service.create_payment_session(
             user_id,
-            PaymentCreateSchema(order_id=order.id, amount=Decimal(order.total_amount)),
+            PaymentCreateSchema(order_id=order.id),
         )
 
         return OrderReadSchema(

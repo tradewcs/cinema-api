@@ -11,6 +11,8 @@ celery_app = Celery(
 
 celery_app.autodiscover_tasks(["src.tasks"])
 
+import src.tasks.cleanup_tokens
+
 celery_app.conf.timezone = "UTC"
 
 celery_app.conf.beat_schedule = {

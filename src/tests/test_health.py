@@ -2,7 +2,7 @@ import requests
 import pytest
 
 
-# MINIO_URL = "http://localhost:9000/minio/health/live"
+
 MINIO_URL = "http://minio:9000/minio/health/live"
 
 

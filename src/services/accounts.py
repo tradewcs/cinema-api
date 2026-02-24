@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timezone
 from typing import cast
 from src.exceptions.security import BaseSecurityError
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.security.interfaces import JWTAuthManagerInterface
 from src.models.accounts import (
     User,

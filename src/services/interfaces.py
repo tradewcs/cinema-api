@@ -25,7 +25,7 @@ class PaymentProcessorInterface(ABC):
         """
 
     @abstractmethod
-    async def handle_webhook(self, payload: bytes, sig_header: str) -> None:
+    async def handle_webhook(self, payload: bytes, headers: dict) -> None:
         """
         Verify webhook event.
         """

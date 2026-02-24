@@ -43,5 +43,9 @@ class InvalidSignature(WebHookPaymentError):
     pass
 
 
+class SignatureDoesNotExist(WebHookPaymentError):
+    pass
+
+
 class SessionDoesNotExistError(WebHookPaymentError):
     pass

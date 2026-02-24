@@ -2,6 +2,7 @@ from typing import Sequence, List
 
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, joinedload
 
 from src.enums import OrderStatus
 from src.models import OrderItem, Order
@@ -12,7 +13,11 @@ class CrudOrder:
         self.db = db
 
     async def get_order_by_id(self, order_id: int) -> Order | None:
-        stmt = select(Order).where(Order.id == order_id)
+        stmt = (
+            select(Order)
+            .options(selectinload(Order.items), joinedload(Order.user))
+            .where(Order.id == order_id)
+        )
 
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
@@ -23,18 +28,16 @@ class CrudOrder:
         return result.scalars().all()
 
     async def create_order(self, user_id: int) -> Order:
-        db_order = Order(
-            user_id=user_id,
-            status=OrderStatus.PENDING,
-            total_amount=None
-        )
+        db_order = Order(user_id=user_id, status=OrderStatus.PENDING, total_amount=None)
         self.db.add(db_order)
         await self.db.commit()
         await self.db.refresh(db_order)
 
         return db_order
 
-    async def update_order_status(self, order_id: int, new_status: OrderStatus) -> Order | None:
+    async def update_order_status(
+        self, order_id: int, new_status: OrderStatus
+    ) -> Order | None:
         order = await self.get_order_by_id(order_id)
 
         if not order:
@@ -47,8 +50,9 @@ class CrudOrder:
 
         return order
 
-    async def update_order_total_amount(self, order_id: int,
-                                  amount: float) -> Order | None:
+    async def update_order_total_amount(
+        self, order_id: int, amount: float
+    ) -> Order | None:
         order = await self.get_order_by_id(order_id)
 
         if not order:
@@ -81,12 +85,11 @@ class CrudOrderItem:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-
-    async def create_order_item(self, order_id: int, movie_id: int, price: int) -> OrderItem:
+    async def create_order_item(
+        self, order_id: int, movie_id: int, price: int
+    ) -> OrderItem:
         db_order_item = OrderItem(
-            order_id=order_id,
-            movie_id=movie_id,
-            price_at_order=price
+            order_id=order_id, movie_id=movie_id, price_at_order=price
         )
 
         self.db.add(db_order_item)

@@ -4,7 +4,6 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
 
 from src.enums import OrderStatus
-from src.schemas.payments import PaymentSessionReadSchema
 
 
 class OrderCreateSchema(BaseModel):

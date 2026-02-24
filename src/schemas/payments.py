@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -19,6 +20,7 @@ class PaymentReadSchema(BaseModel):
     order_id: int
     status: PaymentStatusEnum = Field(default=PaymentStatusEnum.SUCCESSFUL)
     amount: Decimal = Field(max_digits=10, decimal_places=2)
+    created_at: datetime
     external_payment_id: str | None = None
     payment_items: list[PaymentReadItemSchema] = Field(default_factory=list)
 

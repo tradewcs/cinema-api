@@ -82,6 +82,10 @@ class PaymentRepository(IRepository[Payment]):
         stmt = (
             select(Payment)
             .where(Payment.external_payment_id == external_payment_id)
-            .options(joinedload(Payment.payment_items))
+            .options(
+                joinedload(Payment.user),
+                joinedload(Payment.order),
+                joinedload(Payment.payment_items),
+            )
         )
         return await self.db.scalar(stmt)

@@ -15,6 +15,7 @@ from src.exceptions import (
     InvalidSignature,
     OrderNotFoundError,
     PaymentError,
+    SignatureDoesNotExist,
 )
 from src.models import User
 
@@ -53,10 +54,15 @@ async def create_session(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Order with id {payment_data.order_id} not found",
         )
-    except (PaymentNotAllowed, PaymentAmountMismatch):
+    except PaymentNotAllowed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Order with id {payment_data.order_id} is invalid",
+        )
+    except PaymentAmountMismatch:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Payment amount mismatches with order amount",
         )
     except PaymentSessionError:
         raise HTTPException(
@@ -71,22 +77,14 @@ async def handle_webhook(
     stripe_service: PaymentServiceDep,
 ) -> dict[str, str]:
     payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
-
-    if not sig_header:
+    try:
+        await stripe_service.handle_webhook(payload, dict(request.headers))
+    except (SignatureDoesNotExist, InvalidPayload, InvalidSignature):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing stripe-signature header",
         )
-    try:
-        await stripe_service.handle_webhook(payload, sig_header)
-    except (
-        PaymentDoesNotExist,
-        SessionDoesNotExistError,
-        PaymentDoesNotExist,
-        InvalidPayload,
-        InvalidSignature,
-    ):
+    except (PaymentDoesNotExist, SessionDoesNotExistError):
         raise HTTPException(
             status_code=status.HTTP_200_OK,
             detail="Success",
@@ -139,15 +137,15 @@ async def handle_refund(
 
 @router.get("/success", status_code=status.HTTP_200_OK)
 async def payment_success(
-    ext_session_id: str,
+    session_id: str,
     stripe_service: PaymentServiceDep,
 ) -> PaymentStatusReadSchema:
     try:
-        return await stripe_service.get_payment_status(ext_session_id)
+        return await stripe_service.get_payment_status(session_id)
     except SessionDoesNotExistError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"No session found by the id {ext_session_id}",
+            detail=f"No session found by the id {session_id}",
         )
 
 

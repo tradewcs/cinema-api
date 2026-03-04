@@ -42,21 +42,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
         self, order: Order, payment_amount: Decimal
     ) -> Decimal:
         if order.total_amount != payment_amount:
-            raise PaymentNotAllowed(f"Order {order.id} has no items")
-        # order_items = order.items
-        #
-        # if not order_items:
-        #     raise PaymentNotAllowed(f"Order {order.id} has no items")
-        #
-        # calculated_total = Decimal("0")
-        # for item in order_items:
-        #     calculated_total += Decimal(str(item.price_at_order))
-        #
-        # if payment_amount != calculated_total:
-        #     raise PaymentAmountMismatch(
-        #         f"Payment amount {payment_amount} doesn't match to order amount {calculated_total} "
-        #     )
-
+            raise PaymentAmountMismatch(f"Order {order.id} has no items")
         return payment_amount
 
     async def _validate_order_for_user(self, order_id: int, user_id: int) -> Order:
@@ -83,27 +69,17 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             order_id=payment_request.order_id, user_id=auth_user_id
         )
 
-        validated_amount = await self._validate_order_amount(
-            order, payment_request.amount
-        )
-
         try:
             payment = await self.payment_repo.create(
-                order_id=order.id, user_id=auth_user_id, amount=validated_amount
+                order_id=order.id, user_id=auth_user_id, amount=order.total_amount
             )
 
             await self.payment_repo_item.create_from_order_items(
                 payment_id=payment.id, order_items=order.items
             )
 
-            base_url = settings.FRONTEND_BASE_URL
-
-            success_url = (
-                f"{base_url}/payments/success?session_id={{CHECKOUT_SESSION_ID}}"
-            )
-            cancel_url = (
-                f"{base_url}/payments/cancel?session_id={{CHECKOUT_SESSION_ID}}"
-            )
+            success_url = f"{settings.BASE_URL}/api/v1/payments/success?session_id={{CHECKOUT_SESSION_ID}}"
+            cancel_url = f"{settings.BASE_URL}/api/v1/payments/cancel?session_id={{CHECKOUT_SESSION_ID}}"
             session = await stripe.checkout.Session.create_async(
                 mode="payment",
                 payment_method_types=["card"],
@@ -114,7 +90,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
                             "product_data": {
                                 "name": "Purchase videos",
                             },
-                            "unit_amount": int(payment_request.amount * 100),
+                            "unit_amount": int(order.total_amount * 100),
                         },
                         "quantity": 1,
                     }
@@ -122,14 +98,14 @@ class StripePaymentProcessor(PaymentProcessorInterface):
                 metadata={
                     "order_id": order.id,
                     "user_id": auth_user_id,
-                    "amount_paid": validated_amount,
+                    "amount_paid": order.total_amount,
                     "payment_id": payment.id,
                 },
                 success_url=success_url,
                 cancel_url=cancel_url,
             )
 
-            payment.external_id = session.id
+            payment.external_payment_id = session.id
 
             await self.db.commit()
 
@@ -152,19 +128,18 @@ class StripePaymentProcessor(PaymentProcessorInterface):
     async def _handle_successful_payment(
         self, payment: Payment, session: stripe.checkout.Session
     ) -> None:
-        if payment.status == PaymentStatusEnum.SUCCESSFUL:
+        if payment.order.status == OrderStatus.PAID:
             return
 
         order_id = int(session.metadata.get("order_id"))
         user_id = int(session.metadata.get("user_id"))
 
-        validated_order = await self._validate_order_for_user(
-            order_id=order_id, user_id=user_id
-        )
-        new_payment_status = PaymentStatusEnum.SUCCESSFUL
+        await self._validate_order_for_user(order_id=order_id, user_id=user_id)
         try:
-            await self.order_repo.update_order_status(order_id, new_status=OrderStatus.PAID)
-            await self.payment_repo.update(payment, status=new_payment_status)
+            await self.order_repo.update_order_status(
+                order_id, new_status=OrderStatus.PAID
+            )
+            await self.payment_repo.update(payment, status=PaymentStatusEnum.SUCCESSFUL)
             await self.db.commit()
         except (SQLAlchemyError, IntegrityError):
             await self.db.rollback()
@@ -187,9 +162,8 @@ class StripePaymentProcessor(PaymentProcessorInterface):
 
     async def _handle_refund_updated(self, refund: stripe.Refund) -> None:
         payment_intent = refund.payment_intent
-
         sessions = await stripe.checkout.Session.list_async(
-            payment_intent=payment_intent.id, limit=1
+            payment_intent=payment_intent, limit=1
         )
 
         if not sessions.data:
@@ -198,28 +172,54 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             )
 
         session = sessions.data[0]
+        order_id = int(session.metadata.get("order_id"))
 
         payment = await self.payment_repo.get_by_external_payment_id(session.id)
 
         if not payment:
             raise PaymentDoesNotExist("Payment does not exist")
 
-        if refund.status == "succeeded":
-            await self.payment_repo.update(payment, status=PaymentStatusEnum.REFUNDED)
-            await self.db.commit()
+        if (
+            refund.status == "succeeded"
+            and payment.status != PaymentStatusEnum.REFUNDED
+        ):
+            try:
+                await self.payment_repo.update(
+                    payment, status=PaymentStatusEnum.REFUNDED
+                )
+                await self.order_repo.update_order_status(
+                    order_id=order_id, new_status=OrderStatus.CANCELED
+                )
+                await self.db.commit()
+            except (IntegrityError, SQLAlchemyError):
+                await self.db.rollback()
+                raise WebHookPaymentError("Error while processing webhook")
 
-    async def handle_webhook(self, payload: bytes, sig_header: str) -> None:
+    async def handle_webhook(self, payload: bytes, headers: dict) -> None:
+        sig_header = headers.get("stripe-signature")
+
+        if not sig_header:
+            raise SignatureDoesNotExist("Missing stripe-signature header")
+
         event = self._get_verified_event(payload=payload, sig_header=sig_header)
 
-        # attention: not intented for refunds, see refund handler below
+        if event.type in (
+            "refund.updated",
+            "refund.created",
+            "charge.refunded",
+            "charge.refund.updated",
+        ):
+            refund = cast(stripe.Refund, event.data.object)
+            await self._handle_refund_updated(refund)
+            return
+
         session = cast(stripe.checkout.Session, event.data.object)
-        # session = cast(stripe.Refund, event.data.object)
 
         stripe_session_id = session.id
 
         payment = await self.payment_repo.get_by_external_payment_id(stripe_session_id)
         if not payment:
-            raise PaymentDoesNotExist("Paymen does not exist")
+            raise PaymentDoesNotExist("Payment does not exist")
 
         if event.type == "checkout.session.completed":
             await self._handle_successful_payment(payment=payment, session=session)
@@ -229,10 +229,6 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             "checkout.session.async_payment_failed",
         ):
             await self._handle_failed_payment(payment=payment)
-
-        elif event.type == "refund.updated" or event.type == "refund.created":
-            refund = cast(stripe.Refund, event.data.object)
-            await self._handle_refund_updated(refund)
 
     async def refund_payment(
         self,
@@ -255,7 +251,7 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             raise SessionDoesNotExistError("No payment intent found for this session")
 
         # validate the user to refund
-        if session.metadata.get("user_id") != auth_user_id:
+        if int(session.metadata.get("user_id")) != auth_user_id:
             raise PaymentNotAllowed("Refund not allowed")
 
         amount_in_cents = int(refund_request.amount * 100)
@@ -298,4 +294,15 @@ class StripePaymentProcessor(PaymentProcessorInterface):
             raise SessionDoesNotExistError(
                 f"Session does not exist with {ext_session_id}"
             )
-        return PaymentStatusReadSchema(status=payment.status)
+        order = await self.order_repo.get_order_by_id(order_id=payment.order_id)
+        if not order:
+            raise SessionDoesNotExistError(
+                f"Session does not exist with {ext_session_id}"
+            )
+        return PaymentStatusReadSchema(
+            order_id=order.id,
+            order_status=order.status,
+            order_items=order.items,
+            paid_at=payment.created_at,
+            amount=payment.amount,
+        )

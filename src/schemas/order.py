@@ -21,6 +21,18 @@ class OrderReadSchema(BaseModel):
     created_at: datetime
     status: OrderStatus = OrderStatus.PENDING
     total_amount: Decimal | None = Field(max_digits=10, decimal_places=2)
+    session_id: str | None = None
+    session_url: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OrderListSchema(BaseModel):
+    id: int
+    user_id: int
+    created_at: datetime
+    status: OrderStatus
+    total_amount: Decimal | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -34,6 +46,8 @@ class OrderItemCreateSchema(BaseModel):
 
 
 class OrderItemReadSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     order_id: int
     movie_id: int

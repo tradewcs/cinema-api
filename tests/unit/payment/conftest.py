@@ -25,7 +25,7 @@ def mock_order_repo():
 
 
 @pytest.fixture
-def mock_stripe_processor(
+def stripe_processor(
     mock_db, mock_payment_repo, mock_payment_item_repo, mock_order_repo
 ):
     return StripePaymentProcessor(

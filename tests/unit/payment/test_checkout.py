@@ -16,7 +16,7 @@ class TestCreatePaymentSession:
     @pytest.mark.asyncio
     async def test_creates_session_successfully(
         self,
-        mock_stripe_processor,
+        stripe_processor,
         mock_order_repo,
         mock_payment_repo,
         mock_payment_item_repo,
@@ -34,7 +34,7 @@ class TestCreatePaymentSession:
             "src.services.stripe_payments.stripe.checkout.Session.create_async",
             new=AsyncMock(return_value=fake_stripe_session),
         ):
-            result = await mock_stripe_processor.create_payment_session(
+            result = await stripe_processor.create_payment_session(
                 auth_user_id=42,
                 payment_request=PaymentCreateSchema(order_id=1),
             )
@@ -45,7 +45,7 @@ class TestCreatePaymentSession:
 
     @pytest.mark.asyncio
     async def test_sets_external_payment_id_on_payment(
-        self, mock_stripe_processor, mock_order_repo, mock_payment_repo, mock_db
+        self, stripe_processor, mock_order_repo, mock_payment_repo, mock_db
     ):
         """The payment's external_payment_id should be set to the Stripe session id."""
         fake_order = make_fake_order()
@@ -59,7 +59,7 @@ class TestCreatePaymentSession:
             "src.services.stripe_payments.stripe.checkout.Session.create_async",
             new=AsyncMock(return_value=fake_stripe_session),
         ):
-            await mock_stripe_processor.create_payment_session(
+            await stripe_processor.create_payment_session(
                 auth_user_id=42,
                 payment_request=PaymentCreateSchema(order_id=1),
             )
@@ -67,36 +67,34 @@ class TestCreatePaymentSession:
         assert fake_payment.external_payment_id == "cs_test_abc"
 
     @pytest.mark.asyncio
-    async def test_raises_when_order_not_found(
-        self, mock_stripe_processor, mock_order_repo
-    ):
+    async def test_raises_when_order_not_found(self, stripe_processor, mock_order_repo):
         """When order is not found OrderNotFoundError excepion raised"""
 
         mock_order_repo.get_order_by_id.return_value = None
 
         with pytest.raises(OrderNotFoundError):
-            await mock_stripe_processor.create_payment_session(
+            await stripe_processor.create_payment_session(
                 auth_user_id=42,
                 payment_request=PaymentCreateSchema(order_id=999),
             )
 
     @pytest.mark.asyncio
     async def test_raises_when_order_belongs_to_different_user(
-        self, mock_stripe_processor, mock_order_repo
+        self, stripe_processor, mock_order_repo
     ):
         """When order belongs to different user PaymentNotAllowed exception raised"""
         fake_order = make_fake_order(user_id=99)
         mock_order_repo.get_order_by_id.return_value = fake_order
 
         with pytest.raises(PaymentNotAllowed):
-            await mock_stripe_processor.create_payment_session(
+            await stripe_processor.create_payment_session(
                 auth_user_id=42,
                 payment_request=PaymentCreateSchema(order_id=1),
             )
 
     @pytest.mark.asyncio
     async def test_raises_when_order_is_not_pending(
-        self, mock_stripe_processor, mock_order_repo
+        self, stripe_processor, mock_order_repo
     ):
         """When order doesn't have pending status PaymentNotAllowed exception raised"""
 
@@ -104,14 +102,14 @@ class TestCreatePaymentSession:
         mock_order_repo.get_order_by_id.return_value = fake_order
 
         with pytest.raises(PaymentNotAllowed):
-            await mock_stripe_processor.create_payment_session(
+            await stripe_processor.create_payment_session(
                 auth_user_id=42,
                 payment_request=PaymentCreateSchema(order_id=1),
             )
 
     @pytest.mark.asyncio
     async def test_rolls_back_and_raises_on_stripe_error(
-        self, mock_stripe_processor, mock_order_repo, mock_payment_repo, mock_db
+        self, stripe_processor, mock_order_repo, mock_payment_repo, mock_db
     ):
         """If Stripe raises, we should rollback and raise PaymentSessionError."""
         from sqlalchemy.exc import SQLAlchemyError
@@ -127,7 +125,7 @@ class TestCreatePaymentSession:
             new=AsyncMock(side_effect=SQLAlchemyError("DB error")),
         ):
             with pytest.raises(PaymentSessionError):
-                await mock_stripe_processor.create_payment_session(
+                await stripe_processor.create_payment_session(
                     auth_user_id=42,
                     payment_request=PaymentCreateSchema(order_id=1),
                 )
